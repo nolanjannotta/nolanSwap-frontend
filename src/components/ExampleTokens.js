@@ -5,6 +5,7 @@ import { useAccount, useContract, useProvider, useSigner,usePrepareContractWrite
 import SwapContainer from './SwapContainer';
 import MockERC20Abi  from "../ABI/MockERC20"
 import PoolFactoryAbi from "../ABI/PoolFactory"
+import PoolABI from "../ABI/Pool.json"
 import { utils } from "ethers";
 
 
@@ -34,6 +35,7 @@ function ExampleTokens(props) {
         contractInterface: MockERC20Abi,
         signerOrProvider: provider
     });
+    
 
     const getTokenData = async() => {
         let _schrute = await schruteBucks.name()
@@ -64,13 +66,14 @@ function ExampleTokens(props) {
         <span>
             {tokenData.schruteName} &nbsp;
             <button onClick={() => {navigator.clipboard.writeText(props.schrute)}}>copy address</button> &nbsp;
-            balance: {tokenData.schruteBalance.toString()}
+            balance: {parseFloat(tokenData.schruteBalance).toFixed(3)}
+            
         </span>
 
         <span>
             {tokenData.stanleyName} &nbsp;
             <button onClick={() => {navigator.clipboard.writeText(props.stanley)}}> copy address</button> &nbsp;
-            balance: {tokenData.stanleyBalance.toString()}
+            balance: {parseFloat(tokenData.stanleyBalance).toFixed(3)}
         </span>
 
         </SwapBox>

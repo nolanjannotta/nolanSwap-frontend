@@ -21,9 +21,9 @@ import CustomConnect from "./components/CustomConnect"
 
 function App() {
 
-const factory = "0xC9a43158891282A2B1475592D5719c001986Aaec"
-const schrute = "0x1c85638e118b37167e9298c2268758e058DdfDA0"
-const stanley = "0x367761085BF3C12e5DA2Df99AC6E1a824612b8fb"  
+const factory = "0x6C2d83262fF84cBaDb3e416D527403135D757892"
+const schrute = "0xFD6F7A6a5c21A3f503EBaE7a473639974379c351"
+const stanley = "0xa6e99A4ED7498b3cdDCBB61a6A607a4925Faa1B7"  
 
   const { chains, provider } = configureChains(
     [chain.foundry],

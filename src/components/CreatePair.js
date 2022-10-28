@@ -38,11 +38,28 @@ const [token2Amount, setToken2Amount] = useState(0)
 
 const [currentReserves, setCurrentReserves] = useState([null,null])
 
+const [removeLiquidityAmount, setRemoveLiquidityAmount] = useState(0);
+
+const [addLiquidityTokenIn, setAddLiquidityTokenIn] = useState({
+    nameIn: "",
+    addressIn: "",
+    amountIn: 0,
+    name2In: "",
+    address2In: "",
+    amount2In: 0
+})
+
+console.log(addLiquidityTokenIn)
+
 const [allowances, setAllowances] = useState([])
-console.log(allowances)
 const [poolData, setPoolData] = useState({})
-console.log(poolData)
+const [dataLoaded, setDataLoaded] = useState(false)
 const [createButton, setCreateButton] = useState({text: "select tokens", action: ()=> {return}})
+const [addRemoveLiquidity, setAddRemoveLiquidity] = useState({
+    button: "add liquidity",
+    value: false
+})
+// const [addRemoveLiquidity, setAddRemoveLiquidity] = useState(false)
 
 const [toggle, setToggle] = useState(0)
 
@@ -94,6 +111,15 @@ const getReserveBalances = async() => {
 
 }
 
+const toggleAddRemoveLiquidity = () => {
+    setAddRemoveLiquidity(prev => ({
+        ...prev, 
+        value: !prev.value,
+        button: prev.value ? "add liquidity" : "remove liquidity"
+    
+    }))
+}
+
 
 
 const createPair = async() => {
@@ -101,17 +127,6 @@ const createPair = async() => {
        let receipt = await poolFactory.connect(signer).createPair(token1, token2)
         setCreatePoolHash(receipt.hash) 
     }
-    
-
-}
-
-const InitializePool = async() => {
-    if(token1Amount == 0 || token2Amount == 0) return;
-    console.log("hello")
-    setToggle(1)
-    
-    await poolContract.connect(signer).initializePool(utils.parseUnits(token1Amount.toString(), "ether"), utils.parseUnits(token2Amount.toString(), "ether"))
-    // await poolContract.connect(signer).initializePool(token1Amount, token2Amount)
     
 
 }
@@ -130,29 +145,44 @@ const getAllowance = async() => {
 
 
 const getPoolData = async() => {
+    setDataLoaded(false)
     let poolData = {}
     let reserves = await poolContract.getBalances()
     let liquidity = await poolContract.totalLiquidity()
     let token1Name = await token1Contract.name()   
     let token2Name = await token2Contract.name()    
     let initialized = await poolContract.initialized()
+    let liquidityTokens = await poolContract.balanceOf(address)
     console.log(initialized)
     poolData.reserves = reserves;
     poolData.liquidity = Number(liquidity);
     poolData.token1Name = token1Name;
     poolData.token2Name = token2Name;
     poolData.initialized = initialized;
+    poolData.liquidityTokens = liquidityTokens
 
     setPoolData(poolData)
     setToken1Name(token1Name)
     setToken2Name(token2Name)
     setCurrentReserves(reserves)
 
-   
+    setDataLoaded(true)
     // setCreateButton({action: ()=>{console.log("add liquidity")}, text: "add liquidity"})
     }
 
 
+useEffect(()=>{
+    if(!dataLoaded) return
+    if(!poolData.initialized) { 
+        // setCreateButton({action: ()=>{console.log}, text: "initialize pool"}) 
+        console.log(currentReserves)
+        console.log(poolData)
+        
+    }
+    else {
+        console.log("already initialized")
+    }
+},[poolData])
 
 
 useEffect(()=> {
@@ -161,13 +191,6 @@ useEffect(()=> {
     getAllowance()
         
     // setCreateButton({action: async ()=>{poolContract.connect(signer).initializePool(token1Amount, token2Amount)}, text: "initialize pool"}) 
-
-    if(!poolData.initialized && toggle) {
-        setCreateButton({action: InitializePool, text: "initialize pool"}) 
-        // setCreateButton({action: ()=>{console.log}, text: "initialize pool"}) 
-        console.log(currentReserves)
-        
-    }
 
 }, [poolContract])
 
@@ -185,30 +208,47 @@ const getPool = async() => {
 }
 
 // this gets the pool address as soon as two valid addresses are entered, 
-// also gets the allowances
 
 useEffect(()=> {
     if(!isConnected) return;
 
     if (utils.isAddress(token1) && utils.isAddress(token2) && !toggle) {
         getPool()
-        // setCreateButton({action: ()=>{setToggle(true)}, text: "next"}) 
     }
 
     
     
 },[token1, token2])
 
+const getOtherTokenAndAmount = async(token, amount) => {
+        let tokenOut =await poolContract.getLiquidityAmount(token, utils.parseEther(amount.toString()))
+        console.log(tokenOut[1].toString())
+        let name2In = addLiquidityTokenIn.nameIn == token1Name ? token2Name : token1Name
+        setAddLiquidityTokenIn(prev => ({...prev, name2In: name2In, address2In: tokenOut[0], amount2In: tokenOut[1].toString()}))
+
+        }
+const addLiquidity = async() => {
+    await poolContract.connect(signer).addLiquidity(addLiquidityTokenIn.addressIn, utils.parseEther(addLiquidityTokenIn.amountIn.toString()))
+}
+
+const initializePool = async() => {
+    await poolContract.connect(signer).initializePool(utils.parseEther(token1Amount.toString()), utils.parseEther(token2Amount.toString()))
+}
+
+const removeLiquidity = async() => {
+    await poolContract.connect(signer).removeLiquidity(utils.parseEther(removeLiquidityAmount.toString()))
+}
 
 
+useEffect(()=>{
+    if(toggle == 2) {
 
-// useEffect(()=>{
-//     // if(token1Contract.allowance(address, poolContract.address == 0 || token2Contract.allowance(address, poolContract.address == 0 ))
+        getOtherTokenAndAmount(addLiquidityTokenIn.addressIn, addLiquidityTokenIn.amountIn)
         
-//     if(currentReserves[0] == 0 && currentReserves[1] == 0)
-//         setCreateButton({action: async ()=>{poolContract.connect(signer).initializePool(token1Amount, token2Amount)}, text: "initialize pool"}) 
+    }
 
-// },[currentReserves])
+
+},[toggle])
 
 
 
@@ -217,11 +257,13 @@ useEffect(()=> {
     <Container>
         
         <SwapBox>
-            Create a pair & add liquidity
+            {toggle == 0 && "Create a pair & add liquidity"}
+            
+            {toggle > 0 && (poolData.initialized  ? (<button onClick={toggleAddRemoveLiquidity}>add/remove liquidity</button>) : "Initialize")}
 
+            {toggle ==0 &&
 
-            {toggle ==0
-            &&
+            <>
             <SwapInput>
 
 
@@ -230,26 +272,135 @@ useEffect(()=> {
                 tokenB  
                 <Input type="text" name="name" onChange={(event) =>{setToken2(event.target.value)}}/>
             </SwapInput>
-            
-            }
-            { toggle ==1 
-            &&
-            <SwapInput>
-                    
-                {token1Name} - current reserves: {utils.formatEther(currentReserves[0])}
-                {allowances[0] == 0 && <button onClick={() => {approvePool(token1Contract)}}>allow all</button>}
-                <Input type="number" name="name"  onChange={(event) => {setToken1Amount(event.target.value)}} />
-                {token2Name} - current reserves: {utils.formatEther(currentReserves[1])}
-                {allowances[1] == 0 && <button onClick={() => {approvePool(token2Contract)}}>allow all</button>}
-                <Input type="number" name="name"  onChange={(event) =>{setToken2Amount(event.target.value)}}/>
 
-            </SwapInput>
-
-            }
             <div>
             {toggle > 0 && <button onClick={() => setToggle(prev => prev-1)}>back</button>}
             <button onClick={createButton.action}>{createButton.text}</button>
             </div>
+            </>
+
+            }
+
+
+            {/* INITIALIZE OR ADD LIQUIDITY */}
+            {toggle ==1 &&
+            <>
+
+            {poolData.initialized
+            ?
+            (<>
+
+                {addRemoveLiquidity.value 
+                    ?
+                    <SwapInput>
+                        <span>
+                            remove liquidity
+                        </span>
+                        your LP token balance: {utils.formatEther(poolData.liquidityTokens)}
+
+                        <Input type="number" name="name" placeholder="amount"  onChange={(event) => {setRemoveLiquidityAmount(event.target.value)}} />
+                        </SwapInput>
+                    :
+                <SwapInput>
+                    <span>
+                    add liquidity. first select a starting token:   
+                    </span>
+                        {token1Name} - current reserves: {parseFloat(utils.formatEther(currentReserves[0])).toFixed(3)}
+
+                        <button onClick={() => {setAddLiquidityTokenIn(prev => ({...prev, nameIn:token1Name, addressIn: token1}))}}>select</button>
+                        {token2Name} - current reserves: {parseFloat(utils.formatEther(currentReserves[1])).toFixed(3)}
+                        <button onClick={() => {setAddLiquidityTokenIn(prev => ({...prev, nameIn:token2Name, addressIn: token2}))}}>select</button>  
+
+                    <span>
+                    <Input type="number" name="name" placeholder="amount"  onChange={(event) => {setAddLiquidityTokenIn(prev => ({...prev, amountIn: event.target.value}))}} />
+                    &nbsp;{addLiquidityTokenIn.nameIn}
+                    </span>
+
+                </SwapInput>
+                }
+                </>)
+            : 
+                        // initialize page
+                    <SwapInput>
+                    {token1Name} - current reserves: {utils.formatEther(currentReserves[0])}
+                    {allowances[0] == 0 && <button onClick={() => {approvePool(token1Contract)}}>allow all</button>}
+                    <Input type="number" name="name"   onChange={(event) => {setToken1Amount(event.target.value)}} />
+                    {token2Name} - current reserves: {utils.formatEther(currentReserves[1])}
+                    {allowances[1] == 0 && <button onClick={() => {approvePool(token2Contract)}}>allow all</button>}
+                    <Input type="number" name="name"   onChange={(event) =>{setToken2Amount(event.target.value)}}/>
+                    
+                     
+                    </SwapInput>
+                }
+                {/* </>  */}
+
+            <div>
+            {toggle > 0 && <button onClick={() => setToggle(prev => prev-1)}>back</button>}
+            <button onClick={() => setToggle(prev => prev+1)}>review operation</button>
+            </div>
+            </>
+
+            }
+
+
+
+            {/* REVIEW AND SUBMIT */}
+            {toggle ==2 &&
+            
+            <>
+            {poolData.initialized
+            ?
+                    <>
+                    {addRemoveLiquidity.value 
+                    ?
+                    <SwapInput>
+                        removing {removeLiquidityAmount} lp tokens
+                        <button onClick={removeLiquidity}>submit</button>
+                    </SwapInput>
+                    
+                    :
+                    <SwapInput>
+                        reserves before:
+                        <span>
+                        {token1Name} - {parseFloat(utils.formatEther(currentReserves[0])).toFixed(3)}
+                        </span>
+                        <span>
+                        {token2Name} - {parseFloat(utils.formatEther(currentReserves[1])).toFixed(3)}
+                        </span>
+
+                        liquidity to add:
+                        <div>
+                        {addLiquidityTokenIn.nameIn} - {addLiquidityTokenIn.amountIn}
+
+                        </div>
+                        <div>
+                        {addLiquidityTokenIn.name2In} - {utils.formatEther(addLiquidityTokenIn.amount2In.toString())}   
+                        </div>
+                        <button onClick={addLiquidity}>submit</button>
+
+                        
+                    </SwapInput>
+                    }
+                    </>
+
+            : 
+                <SwapInput>
+                    <span>
+                       adding {token1Amount} {token1Name} 
+                    </span>
+                    <span>
+                       adding {token2Amount} {token2Name} 
+                    </span>
+                    <button onClick={initializePool}>initialize pool</button>
+
+                </SwapInput>
+            }
+            <div>
+            {toggle > 0 && <button onClick={() => setToggle(prev => prev-1)}>back</button>}
+            </div>
+            </>
+            }
+            
 
 
         </SwapBox>
