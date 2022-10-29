@@ -9,6 +9,30 @@ import PoolABI from "../ABI/Pool.json"
 import { utils } from "ethers";
 
 
+function Data(props) {
+    const {data: signer}= useSigner()
+
+
+
+    const mint = async() => {
+        await props.contract.connect(signer).mint(utils.parseEther("10000"))
+    }
+
+    // const approve = async() => {
+    //     await props.contract.connect(signer).approve(pool, balance);
+    // }
+
+    return (
+        <span>
+            {props.name} &nbsp;
+            <button onClick={() => {navigator.clipboard.writeText(props.address)}}>copy address</button> &nbsp;
+            <button onClick={mint}>mint</button> &nbsp;
+            balance: {parseFloat(props.balance).toFixed(3)}
+            
+        </span>
+    )
+}
+
 
 function ExampleTokens(props) {
 
@@ -53,6 +77,10 @@ function ExampleTokens(props) {
 
     }
 
+    // const mint = async() => {
+    //     await 
+    // }
+
     useEffect(()=>{
         getTokenData()
     },[])
@@ -63,18 +91,8 @@ function ExampleTokens(props) {
     <Container>
         <SwapBox>
         Demo tokens
-        <span>
-            {tokenData.schruteName} &nbsp;
-            <button onClick={() => {navigator.clipboard.writeText(props.schrute)}}>copy address</button> &nbsp;
-            balance: {parseFloat(tokenData.schruteBalance).toFixed(3)}
-            
-        </span>
-
-        <span>
-            {tokenData.stanleyName} &nbsp;
-            <button onClick={() => {navigator.clipboard.writeText(props.stanley)}}> copy address</button> &nbsp;
-            balance: {parseFloat(tokenData.stanleyBalance).toFixed(3)}
-        </span>
+        <Data name={tokenData.schruteName} balance={tokenData.schruteBalance} address={props.schrute} contract={schruteBucks} ></Data>
+        <Data name={tokenData.stanleyName} balance={tokenData.stanleyBalance} address={props.stanley} contract={stanleyNickels}></Data>
 
         </SwapBox>
     </Container>

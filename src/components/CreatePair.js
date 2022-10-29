@@ -61,6 +61,9 @@ const [addRemoveLiquidity, setAddRemoveLiquidity] = useState({
 })
 // const [addRemoveLiquidity, setAddRemoveLiquidity] = useState(false)
 
+const maxUint = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
+
+
 const [toggle, setToggle] = useState(0)
 
 
@@ -131,8 +134,7 @@ const createPair = async() => {
 
 }
 const approvePool = async(tokenContract) => {
-    let balance = await tokenContract.balanceOf(address)
-    await tokenContract.connect(signer).approve(pool, balance);
+    await tokenContract.connect(signer).approve(pool, utils.parseEther("10000000"));
 
 }
 
@@ -140,6 +142,7 @@ const getAllowance = async() => {
     let token1Allowance = await token1Contract.allowance(address, poolContract.address)
     let token2Allowance = await token2Contract.allowance(address, poolContract.address)
     setAllowances([token1Allowance,token2Allowance])
+    console.log(token1Allowance,token2Allowance)
 }
 
 
@@ -303,13 +306,15 @@ useEffect(()=>{
                     :
                 <SwapInput>
                     <span>
-                    add liquidity. first select a starting token:   
+                    add liquidity: first select a starting token:   
                     </span>
                         {token1Name} - current reserves: {parseFloat(utils.formatEther(currentReserves[0])).toFixed(3)}
 
                         <button onClick={() => {setAddLiquidityTokenIn(prev => ({...prev, nameIn:token1Name, addressIn: token1}))}}>select</button>
+                        {allowances[0] == 0 && <button onClick={() => {approvePool(token1Contract)}}>allow all</button>}
                         {token2Name} - current reserves: {parseFloat(utils.formatEther(currentReserves[1])).toFixed(3)}
                         <button onClick={() => {setAddLiquidityTokenIn(prev => ({...prev, nameIn:token2Name, addressIn: token2}))}}>select</button>  
+                        {allowances[1] == 0 && <button onClick={() => {approvePool(token2Contract)}}>allow all</button>}
 
                     <span>
                     <Input type="number" name="name" placeholder="amount"  onChange={(event) => {setAddLiquidityTokenIn(prev => ({...prev, amountIn: event.target.value}))}} />

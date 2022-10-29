@@ -89,7 +89,7 @@ const swap = async() => {
         await poolContract.connect(signer).swapExactAmountIn(utils.parseEther(swapData.amountIn.toString()), swapData.addressIn)
     }
     if(swapData.lastEntered == 2) {
-        await poolContract.connect(signer).swapExactAmountIn(utils.parseEther(swapData.amountOut.toString()), swapData.addressOut)
+        await poolContract.connect(signer).swapExactAmountOut(utils.parseEther(swapData.amountOut.toString()), swapData.addressOut)
 
     }
 }
