@@ -26,12 +26,13 @@ const [token2Amount, setToken2Amount] = useState(0)
 const [swapData, setSwapData] = useState({
     addressIn: "",
     amountIn: 0,
+    nameIn: "",
     addressOut: "",
     amountOut: 0,
+    nameOut: "",
     lastEntered: 1 // 1 == token1 2 == token2
 })
 
-console.log(swapData)
 
 
 const [tokenFlip, setTokenFlip] = useState(false)
@@ -72,7 +73,7 @@ const poolContract = useContract({
 const getAmountOut = async() => {
     let results;
     if(swapData.lastEntered == 1) {
-        results = await poolContract.getTokenAndAmountOut(swapData.addressIn, utils.parseEther(swapData.amountIn.toString()))
+        results = await props.poolContract.getTokenAndAmountOut(swapData.addressIn, utils.parseEther(swapData.amountIn.toString()))
         setSwapData( prev => ({...prev, amountOut: utils.formatEther(results[1].toString())}))
         // console.log(results[0], results[1].toString())
     }
@@ -86,46 +87,74 @@ const getAmountOut = async() => {
 
 const swap = async() => {
     if(swapData.lastEntered == 1) {
-        await poolContract.connect(signer).swapExactAmountIn(utils.parseEther(swapData.amountIn.toString()), swapData.addressIn)
+        await props.poolContract.connect(signer).swapExactAmountIn(utils.parseEther(swapData.amountIn.toString()), swapData.addressIn)
     }
     if(swapData.lastEntered == 2) {
-        await poolContract.connect(signer).swapExactAmountOut(utils.parseEther(swapData.amountOut.toString()), swapData.addressOut)
+        await props.poolContract.connect(signer).swapExactAmountOut(utils.parseEther(swapData.amountOut.toString()), swapData.addressOut)
 
     }
 }
 
-const getPool = async() => {
-    if(utils.isAddress(token1) && utils.isAddress(token2)) {
-        let pool = await poolFactory.getPool(token1,token2);
-        setPool(pool);
-        // console.log(pool)
-    }
-}
 
 const getTokenData = async() => {
     let name1 = await token1Contract.name()
     let name2 = await token2Contract.name()
     setToken1Name(name1)
     setToken2Name(name2)
-    console.log(name1, name2)
 
+    
 
 }
 
 const flipTokens = () => {
     setTokenFlip(prev => !prev)
-    setSwapData(prev => ({...prev, addressIn: prev.addressOut, addressOut: prev.addressIn}))
+    setSwapData(prev => ({
+        ...prev, 
+        addressIn: prev.addressOut, 
+        nameIn: prev.nameOut,
+        amountIn: 0,
+        addressOut: prev.addressIn,
+        nameOut: prev.nameIn,
+        amountOut: 0
+    
+    }))
     // console.log(swapData)
+}
+
+const swapComponent = () => {
+    return (
+        <>
+        <SwapInput>
+                {swapData.nameIn}
+                <Input type="number" name="name" value={swapData.amountIn} onChange={(event)=> {setSwapData( prev => ({...prev, amountIn: event.target.value,lastEntered: 1}))}} />
+                <button onClick={getAmountOut}>calculate</button>
+                <button onClick={flipTokens}>flip</button>
+                {swapData.nameOut}  
+                <Input type="number" name="name" value={swapData.amountOut} onChange={(event)=> {setSwapData( prev => ({...prev, amountOut: event.target.value, lastEntered: 2}))}}/>
+        </SwapInput>
+
+        <div>
+        {toggle > 0 && <button onClick={()=>{setToggle(prev => prev - 1)}}>back</button>}
+        <button onClick={()=>{setToggle(prev => prev + 1)}}>next</button>
+        </div>
+        </>
+    )
 }
 
 
 useEffect(()=> {
-    if(isConnected) {
-      getPool();  
-      getTokenData();
-    }
+    setSwapData(prev => ({
+        ...prev,
+        addressIn: props.pairTokenA.address,
+        nameIn: props.poolData.token1Name,
+        addressOut: props.pairTokenB.address,
+        nameOut: props.poolData.token2Name
 
-},[token1, token2])
+    }))
+
+    console.log(swapData)
+
+},[props.poolData, props.pairTokenA, props.pairTokenB])
 
 
 
@@ -135,9 +164,9 @@ useEffect(()=> {
   return (
     <Container>
         <SwapBox>
-            Swap
+            Swap <br/>
 
-        {toggle==0 &&
+        {/* {toggle==0 &&
         <>
         
         <SwapInput>
@@ -149,52 +178,20 @@ useEffect(()=> {
             <Input type="text" name="name" onChange={(event) =>{setToken2(event.target.value)}}/>
         </SwapInput>
         <button onClick={()=>{setToggle(prev => prev + 1)}}>next</button>
-        </>}
+        </>} */}
+
+        {(toggle==0 && props.poolData.address != "") ?  swapComponent() : "select a pair"}
 
         {toggle==1 &&
         <>
         
         <SwapInput>
-            {!tokenFlip
-            ?
-            <>
-                {token1Name}
-                <Input type="number" name="name" value={swapData.amountIn} onChange={(event)=> {setSwapData( prev => ({...prev, amountIn: event.target.value, addressIn: token1, addressOut: token2, lastEntered: 1}))}} />
-                <button onClick={getAmountOut}>calculate</button>
-                <button onClick={flipTokens}>flip</button>
-                {token2Name}  
-                <Input type="number" name="name" value={swapData.amountOut} onChange={(event)=> {setSwapData( prev => ({...prev, amountOut: event.target.value, addressIn: token1, addressOut: token2, lastEntered: 2}))}}/>
-            </>
-            :
-            <>
-                {token2Name}
-                <Input type="number" name="name" value={swapData.amountIn} onChange={(event)=> {setSwapData( prev => ({...prev, amountIn: event.target.value, addressIn: token2,addressOut: token1, lastEntered: 1 }))}} />
-                <button onClick={getAmountOut}>calculate</button>
-                <button onClick={flipTokens}>flip</button>
-                {token1Name}  
-                <Input type="number" name="name" value={swapData.amountOut} onChange={(event)=> {setSwapData( prev => ({...prev, amountOut: event.target.value, addressIn: token2,addressOut: token1, lastEntered: 2 }))}}/>
-            </>
-            }
-        </SwapInput>
-
-        <div>
-        {toggle > 0 && <button onClick={()=>{setToggle(prev => prev - 1)}}>back</button>}
-        <button onClick={()=>{setToggle(prev => prev + 1)}}>next</button>
-        </div>
-        
-        </>
-        }
-
-        {toggle==2 &&
-        <>
-        
-        <SwapInput>
             review swap
             <div>
-            you send {swapData.amountIn} {swapData.addressIn == token1 ? token1Name : token2Name}
+            you send {swapData.amountIn} {swapData.addressIn == token1 ? props.poolData.token1Name : props.poolData.token2Name}
             </div>
             <div>
-            you recieve {swapData.amountOut} {swapData.addressOut == token1 ? token1Name : token2Name}
+            you recieve {swapData.amountOut} {swapData.addressOut == token1 ? props.poolData.token1Name : props.poolData.token2Name}
             </div>
             <button onClick={swap}>swap</button>
             
