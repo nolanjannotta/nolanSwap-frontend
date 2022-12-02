@@ -1,10 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import styled from 'styled-components'
-import {ConnectButton} from '@rainbow-me/rainbowkit';
-import { useAccount, useContract, useProvider, useSigner,usePrepareContractWrite, useContractWrite } from 'wagmi'
-
-import MockERC20Abi  from "../ABI/MockERC20"
-import PoolAbi from "../ABI/Pool"
+import {useAccount, useContract, useProvider, useSigner} from 'wagmi'
+import PoolAbi from "../ABI/NSPool"
 
 
 function SwapContainer(props) {

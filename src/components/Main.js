@@ -7,7 +7,9 @@ import { useAccount, useContract, useProvider, useSigner,usePrepareContractWrite
 import { utils, constants } from "ethers";
 import MockERC20Abi  from "../ABI/MockERC20"
 import PoolFactoryAbi from "../ABI/PoolFactory"
-import PoolABI from "../ABI/Pool.json"
+import PoolABI from "../ABI/NSPool.json"
+import CustomConnect from "./CustomConnect"
+
 
 
 
@@ -21,9 +23,13 @@ function Main() {
     const {address} = useAccount()
 
     const [pool, setPool] = useState("")
-    const factory = "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9"
-    const schrute = "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9"
-    const stanley = "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707" 
+
+    const factoryAddress = "0xbf2ad38fd09F37f50f723E35dd84EEa1C282c5C9"
+    const schruteAddress = "0xF66CfDf074D2FFD6A4037be3A669Ed04380Aef2B"
+    const stanleyAddress = "0xFC4EE541377F3b6641c23CBE82F6f04388290421"
+    const correlated1Address = "0x20d7B364E8Ed1F4260b5B90C41c2deC3C1F6D367"
+    const correlated2Address = "0xf5C3953Ae4639806fcbCC3196f71dd81B0da4348" 
+
     const [poolData, setPoolData] = useState({
         address: "",
         reservesA: 0,
@@ -31,45 +37,26 @@ function Main() {
         symbol:"",
         totalLiquidity: 0,
         isInitialized: false,
-        yourLPBalance: 0
+        yourLPBalance: 0,
+        addressA:"",
+        addressB:""
     })
 
-    const [tokenData, setTokenData]= useState({
-        schruteName: "",
-        stanleyName: "",
-        schruteBalance: 0,
-        stanleyBalance: 0
-
-    })
+    
 
     const [tokenPair, setTokenPair] = useState({
         tokenA: constants.AddressZero,
         tokenB: constants.AddressZero
     })
 
-    const [tokenNames, setTokenNames] = useState({
-        tokenA: "",
-        tokenB: ""
-    })
-
-
 
     const poolFactory = useContract({
-        addressOrName: factory,
+        addressOrName: factoryAddress,
         contractInterface: PoolFactoryAbi,
         signerOrProvider: provider
     });
 
-    const schruteBucks = useContract({
-        addressOrName: schrute,
-        contractInterface: MockERC20Abi,
-        signerOrProvider: provider
-    });
-    const stanleyNickels = useContract({
-        addressOrName: stanley,
-        contractInterface: MockERC20Abi,
-        signerOrProvider: provider
-    });
+
 
 
     const pairTokenA = useContract({
@@ -93,38 +80,11 @@ function Main() {
         setPoolData(prev => ({...prev, address: pool}))
     }
 
-    const getNames = async() => {
-        let nameA = await pairTokenA.name();
-        let nameB = await pairTokenB.name();
-        setTokenNames({
-            tokenA: nameA,
-            tokenB: nameB
-        })
 
 
-    }
-
-    const getTokenData = async() => {
-        let _schrute = await schruteBucks.name()
-        let _stanley = await stanleyNickels.name()
-        let schruteBalance = await schruteBucks.balanceOf(address)
-        let stanleyBalance = await stanleyNickels.balanceOf(address)
-        setTokenData({
-            schruteName: _schrute,
-            stanleyName: _stanley,
-            schruteBalance: utils.formatEther(schruteBalance),
-            stanleyBalance: utils.formatEther(stanleyBalance)
-
-        })
-
-
-    }
 
 
 const getPoolData = async() => {
-    // let pool = await poolFactory.getPool(tokenPair.tokenA,tokenPair.tokenB);
-    // // setPool(pool);
-    // setPoolData(prev => ({...prev, address: pool}))
     let lpSymbol = await poolContract.symbol();
     let reserves = await poolContract.getBalances();
     let initialized = await poolContract.initialized();
@@ -142,10 +102,9 @@ const getPoolData = async() => {
         symbol: lpSymbol,
         yourLPBalance: utils.formatEther(yourLPBalance.toString()),
         token1Name: token1Name,
-        token2Name: token2Name
+        token2Name: token2Name,
+        tokenPair: tokenPair
     }))
-
-// }
 } 
 
 useEffect(()=>{
@@ -158,33 +117,30 @@ useEffect(()=> {
     if(utils.isAddress(tokenPair.tokenA) && tokenPair.tokenA != constants.AddressZero  && utils.isAddress(tokenPair.tokenB)&& tokenPair.tokenB != constants.AddressZero) {
 
         getPool();
-        getNames();
-        // console.log(tokenPair)
     }
 },[tokenPair])
 
 
-useEffect(()=>{
-    getTokenData()
-},[])
+
 
 
 
   return (
-    <div>
+    <Background>
+
+            <AccountDetails>
+          <CustomConnect/>
+            </AccountDetails>  
+
         <ExampleTokens 
-            pool={pool} 
-            setPool={setPool} 
-            poolData={poolData}
-            setPoolData={setPoolData} 
-            tokenPair={tokenPair}
-            setTokenPair={setTokenPair}
-            stanleyNickels={stanleyNickels}
-            schruteBucks={schruteBucks}
-            factory={factory} 
-            schrute={schrute} 
-            stanley={stanley}
-            tokenData={tokenData}
+            pool={pool} setPool={setPool} 
+            poolData={poolData} setPoolData={setPoolData} 
+            tokenPair={tokenPair} setTokenPair={setTokenPair}
+            poolFactory={poolFactory} 
+            schruteAddress={schruteAddress} 
+            stanleyAddress={stanleyAddress}
+            correlated1Address={correlated1Address}
+            correlated2Address={correlated2Address}
             
             
             ></ExampleTokens>       
@@ -192,27 +148,23 @@ useEffect(()=>{
          <CardHolder>
            <CreatePair 
             poolData={poolData} 
-            factory={factory}
-
             poolContract={poolContract}
             pairTokenA={pairTokenA}
             pairTokenB={pairTokenB}
-            tokenNames={tokenNames}
             
             
             ></CreatePair>
           <SelectPair 
             poolData={poolData} 
-            factory={factory}
             poolContract={poolContract}
             pairTokenA={pairTokenA}
             pairTokenB={pairTokenB}
-            tokenNames={tokenNames}
             ></SelectPair> 
           </CardHolder>
 
 
-    </div>
+
+    </Background>
   )
 }
 
@@ -221,9 +173,23 @@ export default Main
 const CardHolder = styled.div`
   display: flex;
   // flex-direction: column;
-  justify-content: space-evenly;
-  align-items: space-evenly;
+  justify-content: space-between;
+  width: 65%;
+`
 
+const Background = styled.div`
+background-color: #fbf2c4;
+height: 100vh;
+width: 100vw;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center
+`
 
+const AccountDetails = styled.div`
+position: absolute;
+top: 0;
+right: 0;
 
 `

@@ -1,12 +1,13 @@
 import React, {useState, useEffect} from 'react'
 import styled from 'styled-components'
-import {useSigner } from 'wagmi'
-import {utils} from "ethers";
+import {useSigner, useAccount, useContract, useProvider } from 'wagmi'
+import {constants, utils} from "ethers";
+import MockERC20Abi  from "../ABI/MockERC20"
 
 
-function Data(props) {
+
+function Token(props) {
     const {data: signer}= useSigner()
-
 
 
     const mint = async() => {
@@ -28,6 +29,68 @@ function Data(props) {
 
 
 function ExampleTokens(props) {
+    const {data: signer}= useSigner()
+    const provider = useProvider()
+    const {address} = useAccount()
+
+    const schruteBucks = useContract({
+        addressOrName: props.schruteAddress,
+        contractInterface: MockERC20Abi,
+        signerOrProvider: provider
+    });
+    const stanleyNickels = useContract({
+        addressOrName: props.stanleyAddress,
+        contractInterface: MockERC20Abi,
+        signerOrProvider: provider
+    });
+    const correlated1 = useContract({
+        addressOrName: props.correlated1Address,
+        contractInterface: MockERC20Abi,
+        signerOrProvider: provider
+    });
+    const correlated2 = useContract({
+        addressOrName: props.correlated2Address,
+        contractInterface: MockERC20Abi,
+        signerOrProvider: provider
+    });
+
+    const [tokenData, setTokenData]= useState({
+        schruteName: "",
+        stanleyName: "",
+        schruteBalance: 0,
+        stanleyBalance: 0
+
+    })
+
+    const getTokenData = async() => {
+        let _schrute = await schruteBucks.name()
+        let _stanley = await stanleyNickels.name()
+        let schruteBalance = await schruteBucks.balanceOf(address)
+        let stanleyBalance = await stanleyNickels.balanceOf(address)
+        let _ct1 = await correlated1.name()
+        let _ct2 = await correlated2.name()
+        let ct1Balance = await correlated1.balanceOf(address)
+        let ct2Balance = await correlated2.balanceOf(address)
+        setTokenData({
+            schruteName: _schrute,
+            stanleyName: _stanley,
+            schruteBalance: utils.formatEther(schruteBalance),
+            stanleyBalance: utils.formatEther(stanleyBalance),
+            ct1Name: _ct1,
+            ct2Name: _ct2,
+            ct1Balance: utils.formatEther(ct1Balance),
+            ct2Balance: utils.formatEther(ct2Balance),
+
+
+        })
+
+
+    }
+    useEffect(()=>{
+        getTokenData()
+    },[])
+
+    console.log(props.poolData)
     const updatePairTokens = (newAddress) => {
         if(newAddress == props.tokenPair.tokenA){
             return
@@ -41,6 +104,14 @@ function ExampleTokens(props) {
 
     }
 
+    const createPair = async() => {
+        if(utils.isAddress(props.tokenPair.tokenA) && utils.isAddress(props.tokenPair.tokenB)) {
+           await props.poolFactory.connect(signer).createPair(props.tokenPair.tokenA, props.tokenPair.tokenB)
+        }
+        
+    
+    }
+
     
 
 
@@ -49,23 +120,44 @@ function ExampleTokens(props) {
     <Container>
         <SwapBox>
         Demo tokens
-        <Data 
-            updatePair={updatePairTokens} 
-            name={props.tokenData.schruteName} 
-            balance={props.tokenData.schruteBalance} 
-            address={props.schrute} 
-            contract={props.schruteBucks} 
-            ></Data>
 
-        <Data 
+        <Token 
             updatePair={updatePairTokens} 
-            name={props.tokenData.stanleyName} 
-            balance={props.tokenData.stanleyBalance} 
-            address={props.stanley} 
-            contract={props.stanleyNickels}
-            ></Data>
+            name={tokenData.schruteName} 
+            balance={tokenData.schruteBalance} 
+            address={props.schruteAddress} 
+            contract={schruteBucks} 
+            ></Token>
+
+        <Token
+            updatePair={updatePairTokens} 
+            name={tokenData.stanleyName} 
+            balance={tokenData.stanleyBalance} 
+            address={props.stanleyAddress} 
+            contract={stanleyNickels}
+            ></Token>
+
+
+        <Token 
+            updatePair={updatePairTokens} 
+            name={tokenData.ct1Name} 
+            balance={tokenData.ct1Balance} 
+            address={props.correlated1Address} 
+            contract={correlated1}
+            ></Token>
+        <Token 
+            updatePair={updatePairTokens} 
+            name={tokenData.ct2Name} 
+            balance={tokenData.ct2Balance} 
+            address={props.correlated2Address} 
+            contract={correlated2}
+            ></Token>
+
 
         </SwapBox>
+
+        {props.poolData.address != constants.AddressZero ?
+        
         <SwapBox>
             <span>{props.tokenPair.tokenA}  </span>
             <span>x</span> 
@@ -75,10 +167,11 @@ function ExampleTokens(props) {
             <span>tokenB Reserves: {props.poolData.reservesB}</span>
             <span>your lp token balance: {props.poolData.yourLPBalance}</span>
             <span>total liquidity: {props.poolData.totalLiquidity}</span>
-
-
-            
         </SwapBox>
+        :
+        <SwapBox>
+        <button onClick={createPair}>create pool</button>
+        </SwapBox>}
     </Container>
   )
 }
@@ -99,7 +192,7 @@ const Wrapper = styled.div`
 
 const Container = styled.div`
     background-color: #74a892;
-    width: 60vw;
+    width: 65%;
     height: 30vh;
     display: flex;
     justify-content: center;
@@ -107,6 +200,8 @@ const Container = styled.div`
     border-radius: 15px;
     border: 2px solid #008585;
     box-shadow: 8px 8px 8px #615e4c;
+    // transform: rotate(2deg);
+
 
 
 
