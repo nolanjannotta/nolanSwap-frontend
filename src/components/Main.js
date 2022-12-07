@@ -1,11 +1,10 @@
 import React, {useState, useEffect} from 'react'
 import styled from 'styled-components';
-import CreatePair from './CreatePair_copy';
+import CreatePair from './CreatePair';
 import SelectPair from './SelectPair';
 import ExampleTokens from './ExampleTokens';
 import { useAccount, useContract, useProvider} from 'wagmi'
 import { utils, constants } from "ethers";
-import MockERC20Abi  from "../ABI/MockERC20"
 import PoolFactoryAbi from "../ABI/PoolFactory"
 import PoolABI from "../ABI/NSPool.json"
 import CustomConnect from "./CustomConnect"
