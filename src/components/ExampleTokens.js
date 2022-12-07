@@ -90,23 +90,22 @@ function ExampleTokens(props) {
         getTokenData()
     },[])
 
-    console.log(props.poolData)
     const updatePairTokens = (newAddress) => {
-        if(newAddress == props.tokenPair.tokenA){
+        if(newAddress == props.poolData.addressA){
             return
         }
-        let pair = {
-            tokenA: newAddress,
-            tokenB: props.tokenPair.tokenA
-        };
-
-        props.setTokenPair(pair)
+        props.setPoolData( prev => ({
+            ...prev,
+            addressA: newAddress,
+            addressB: prev.addressA
+            
+        }))
 
     }
 
     const createPair = async() => {
-        if(utils.isAddress(props.tokenPair.tokenA) && utils.isAddress(props.tokenPair.tokenB)) {
-           await props.poolFactory.connect(signer).createPair(props.tokenPair.tokenA, props.tokenPair.tokenB)
+        if(utils.isAddress(props.poolData.addressA) && utils.isAddress(props.poolData.addressB)) {
+           await props.poolFactory.connect(signer).createPair(props.poolData.addressA, props.poolData.addressB)
         }
         
     
@@ -159,17 +158,20 @@ function ExampleTokens(props) {
         {props.poolData.address != constants.AddressZero ?
         
         <SwapBox>
-            <span>{props.tokenPair.tokenA}  </span>
+            <span>{props.poolData.addressA}  </span>
             <span>x</span> 
-            <span>{props.tokenPair.tokenB}</span>
+            <span>{props.poolData.addressB}</span>
             <span>lp token symbol: {props.poolData.symbol}</span>
-            <span>tokenA Reserves: {props.poolData.reservesA}</span>
-            <span>tokenB Reserves: {props.poolData.reservesB}</span>
+            <span>{props.poolData.token1Name} reserves: {props.poolData.reservesA}</span>
+            <span>{props.poolData.token2Name} reserves: {props.poolData.reservesB}</span>
             <span>your lp token balance: {props.poolData.yourLPBalance}</span>
             <span>total liquidity: {props.poolData.totalLiquidity}</span>
         </SwapBox>
         :
         <SwapBox>
+        <span>{props.poolData.addressA}  </span>
+        <span>x</span> 
+        <span>{props.poolData.addressB}</span>
         <button onClick={createPair}>create pool</button>
         </SwapBox>}
     </Container>

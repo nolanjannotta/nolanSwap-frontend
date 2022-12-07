@@ -191,7 +191,7 @@ const initializeComponent = () => {
                         {props.poolData.token2Name}
                         {allowances[1] == 0 && <button onClick={() => {approvePool(props.pairTokenB)}}>allow all</button>}
                         <Input type="number" name="name"   onChange={(event) =>{setToken2Amount(event.target.value)}}/>
-                        
+                        <button onClick={initializePool}>initialize pool</button>
                          
                         </SwapInput>
         )
