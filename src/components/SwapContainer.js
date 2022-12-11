@@ -1,27 +1,65 @@
 import React, {useState, useEffect} from 'react'
 import styled from 'styled-components'
-import {useAccount, useContract, useProvider, useSigner} from 'wagmi'
+import {useProvider, useAccount, useSigner,useContractRead} from 'wagmi'
 import PoolAbi from "../ABI/NSPool"
+import { utils, constants } from "ethers";
+import MockERC20Abi from "../ABI/MockERC20.json"
+import {isZeroAddress} from "../utils"
+ 
 
 
-function SwapContainer(props) {
+
+function TokenBalance({tokenAddress}) {
+    const {address} = useAccount();
+
+    const { data: balance, refetch: getBalance} = useContractRead({
+        addressOrName: tokenAddress,
+        contractInterface: MockERC20Abi,
+        functionName: 'balanceOf',
+        args: [address]
+      })
+  return (
+    <div>balance: {parseFloat(utils.formatEther(balance || 0)).toFixed(3)}</div>
+  )
+}
+
+
+
+function SwapContainer({setSwapData, poolData, poolContract, swapData, setReview}) {
 
 const { address, isConnected } = useAccount();
 const [poolAddr, setPoolAddr] = useState();
 
-console.log(props.pool)
-
 const provider = useProvider();
 const { data: signer } = useSigner()
 
-const pool = useContract({
-    addressOrName: props.pool,
-    contractInterface: PoolAbi,
-    signerOrProvider: provider
-});
+
+const flipTokens = () => {
+    setSwapData(prev => ({
+        ...prev, 
+        addressIn: prev.addressOut, 
+        nameIn: prev.nameOut,
+        amountIn: 0,
+        addressOut: prev.addressIn,
+        nameOut: prev.nameIn,
+        amountOut: 0
+    
+    }))
+}
 
 
-const getTokenBalance = async() => {
+const getOtherAmount = async() => {
+    let results;
+    if(swapData.lastEntered == 1) {
+        results = await poolContract.getTokenAndAmountOut(swapData.addressIn, utils.parseEther(swapData.amountIn.toString()))
+        setSwapData( prev => ({...prev, amountOut: utils.formatEther(results[1].toString())}))
+        // console.log(results[0], results[1].toString())
+    }
+    else if(swapData.lastEntered == 2) {
+        results = await poolContract.getTokenAndAmountIn(swapData.addressOut, utils.parseEther(swapData.amountOut.toString()))
+        setSwapData( prev => ({...prev, amountIn: utils.formatEther(results[1].toString())}))
+        // console.log(results[0], results[1].toString())
+    }
 
 }
 
@@ -30,14 +68,30 @@ const getTokenBalance = async() => {
 
 
 
-  return (
+    return (
+        <>
+        <SwapInput>
+                {swapData.nameIn}
+                <div>
+                    <Input type="number" name="name" value={swapData.amountIn} onChange={(event)=> {setSwapData( prev => ({...prev, amountIn: event.target.value || 0,lastEntered: 1}))}} />
+                    {/* <TokenBalance tokenAddress={swapData.addressIn}/> */}
+                </div>
+                
+                <button onClick={getOtherAmount}>calculate</button>
+                <button onClick={flipTokens}>flip</button>
+                {swapData.nameOut}
+                <div>
+                    <Input type="number" name="name" value={swapData.amountOut} onChange={(event)=> {setSwapData( prev => ({...prev, amountOut: event.target.value || 0, lastEntered: 2}))}}/>
+                    {/* <TokenBalance tokenAddress={swapData.addressOut}/> */}
+                </div>
+                <button onClick={()=>{getOtherAmount(); setReview(prev => !prev)}}>review operation</button>
 
+        </SwapInput>
 
-    <button>Swap</button>
-
-
-  )
+        </>
+    )
 }
+
 
 export default SwapContainer
 

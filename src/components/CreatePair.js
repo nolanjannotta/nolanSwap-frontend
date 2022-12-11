@@ -2,6 +2,8 @@ import React from 'react'
 import styled from 'styled-components'
 import InitializePool from './InitializePool';
 import ManageLiquidity from './ManageLiquidity';
+import {utils} from "ethers";
+import { isZeroAddress } from '../utils';
 
  
 
@@ -11,28 +13,24 @@ function CreatePair(props) {
 
   return (
     <Container>
-        {
-            props.poolData.address != "" ?
+        {(props.poolData.address == "" || isZeroAddress(props.poolData.address)) && "select or create a pair to manage liquidity"}
         
+        {utils.isAddress(props.poolData.address) && !isZeroAddress(props.poolData.address) &&
         <SwapBox>
-            {
-            props.poolData.initialized 
-            ? <ManageLiquidity 
-                poolData={props.poolData} 
-                pool={props.poolContract}
-                /> 
+            {props.poolData.initialized 
+                ? <ManageLiquidity 
+                    poolData={props.poolData} 
+                    pool={props.poolContract}
+                    /> 
 
-            : <InitializePool 
-                pool={props.poolContract} 
-                poolData={props.poolData} 
-                pairTokenA={props.pairTokenA} 
-                pairTokenB={props.pairTokenB}
-                />}
+                : <InitializePool 
+                    pool={props.poolContract} 
+                    poolData={props.poolData} 
+                    pairTokenA={props.pairTokenA} 
+                    pairTokenB={props.pairTokenB}
+                    />}
 
-        </SwapBox>
-        :
-        "select a pair and manage liquidity"    
-    }
+        </SwapBox>}
 
     </Container>
   )

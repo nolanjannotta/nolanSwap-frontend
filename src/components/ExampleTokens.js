@@ -1,119 +1,110 @@
-import React, {useState, useEffect} from 'react'
+import React from 'react'
 import styled from 'styled-components'
-import {useSigner, useAccount, useContract, useProvider } from 'wagmi'
-import {constants, utils} from "ethers";
+import {useAccount,useContractRead,usePrepareContractWrite, useContractWrite } from 'wagmi'
+import {utils} from "ethers";
+// import {isAddress} from "ethers/utils"
 import MockERC20Abi  from "../ABI/MockERC20"
+import poolFactory from "../ABI/PoolFactory.json"
+import {factory} from "../addresses"
+import {isZeroAddress} from "../utils"
 
 
 
 function Token(props) {
-    const {data: signer}= useSigner()
+    const {address} = useAccount();
 
-
-    const mint = async() => {
-        await props.contract.connect(signer).mint(utils.parseEther("10000"))
+    const token = {
+        addressOrName: props.address,
+        contractInterface: MockERC20Abi,
     }
+    
 
+    const { data: balance, refetch: getBalance} = useContractRead({
+        ...token,
+        functionName: 'balanceOf',
+        args: [address]
+      })
+    const { data: name,} = useContractRead({
+        ...token,
+        functionName: 'name',
+      })
+
+
+    const {config: mintConfig } = usePrepareContractWrite({
+        ...token,
+        functionName: "mint",
+        args: [utils.parseEther("10000")]
+      })
+
+    const { write: mint } = useContractWrite({
+        ...mintConfig,
+        onSuccess() {
+            getBalance()
+          },
+        onError(error) {
+            console.log('token mint error:', error)
+          },
+    
+    })
 
     return (
         <span>
-            {props.name} &nbsp;
-            {/* <button onClick={() => {navigator.clipboard.writeText(props.address)}}>copy address</button> &nbsp; */}
+            {name} &nbsp;
             <button onClick={()=>{props.updatePair(props.address)}}>select</button> &nbsp;
             <button onClick={mint}>mint</button> &nbsp;
-            balance: {parseFloat(props.balance).toFixed(3)}
+            balance: {parseFloat(utils.formatEther(balance || 0)).toFixed(3)} &nbsp;
+            <button onClick={getBalance}>refresh</button> &nbsp;
+
             
         </span>
     )
 }
 
-
-function ExampleTokens(props) {
-    const {data: signer}= useSigner()
-    const provider = useProvider()
-    const {address} = useAccount()
-
-    const schruteBucks = useContract({
-        addressOrName: props.schruteAddress,
-        contractInterface: MockERC20Abi,
-        signerOrProvider: provider
-    });
-    const stanleyNickels = useContract({
-        addressOrName: props.stanleyAddress,
-        contractInterface: MockERC20Abi,
-        signerOrProvider: provider
-    });
-    const correlated1 = useContract({
-        addressOrName: props.correlated1Address,
-        contractInterface: MockERC20Abi,
-        signerOrProvider: provider
-    });
-    const correlated2 = useContract({
-        addressOrName: props.correlated2Address,
-        contractInterface: MockERC20Abi,
-        signerOrProvider: provider
-    });
-
-    const [tokenData, setTokenData]= useState({
-        schruteName: "",
-        stanleyName: "",
-        schruteBalance: 0,
-        stanleyBalance: 0
-
+function CreatePool({poolData, getPool}) {
+    console.log(poolData)
+    const {config} = usePrepareContractWrite({
+        addressOrName: factory,
+        contractInterface: poolFactory,
+        functionName: "createPair",
+        args: [poolData.addressA, poolData.addressB],
+        enabled: true,
+    })
+    // console.log(config)
+    const {write: createPool} = useContractWrite({
+        ...config,
+        onSuccess() {
+            getPool()
+            
+          },
+        onError(error) {
+            console.log('create pool error:', error)
+          },
+    
     })
 
-    const getTokenData = async() => {
-        let _schrute = await schruteBucks.name()
-        let _stanley = await stanleyNickels.name()
-        let schruteBalance = await schruteBucks.balanceOf(address)
-        let stanleyBalance = await stanleyNickels.balanceOf(address)
-        let _ct1 = await correlated1.name()
-        let _ct2 = await correlated2.name()
-        let ct1Balance = await correlated1.balanceOf(address)
-        let ct2Balance = await correlated2.balanceOf(address)
-        setTokenData({
-            schruteName: _schrute,
-            stanleyName: _stanley,
-            schruteBalance: utils.formatEther(schruteBalance),
-            stanleyBalance: utils.formatEther(stanleyBalance),
-            ct1Name: _ct1,
-            ct2Name: _ct2,
-            ct1Balance: utils.formatEther(ct1Balance),
-            ct2Balance: utils.formatEther(ct2Balance),
+    return(
+        <button onClick={createPool}>create pool</button>
+    )
+}
 
 
-        })
+function ExampleTokens(props) {
+    
 
-
-    }
-    useEffect(()=>{
-        getTokenData()
-    },[])
-
+    console.log(props.poolData)
+    
     const updatePairTokens = (newAddress) => {
         if(newAddress == props.poolData.addressA){
             return
         }
         props.setPoolData( prev => ({
-            ...prev,
+            address: "",
             addressA: newAddress,
             addressB: prev.addressA
             
         }))
 
     }
-
-    const createPair = async() => {
-        if(utils.isAddress(props.poolData.addressA) && utils.isAddress(props.poolData.addressB)) {
-           await props.poolFactory.connect(signer).createPair(props.poolData.addressA, props.poolData.addressB)
-        }
-        
-    
-    }
-
-    
-
-
 
   return (
     <Container>
@@ -122,58 +113,55 @@ function ExampleTokens(props) {
 
         <Token 
             updatePair={updatePairTokens} 
-            name={tokenData.schruteName} 
-            balance={tokenData.schruteBalance} 
             address={props.schruteAddress} 
-            contract={schruteBucks} 
             ></Token>
 
         <Token
             updatePair={updatePairTokens} 
-            name={tokenData.stanleyName} 
-            balance={tokenData.stanleyBalance} 
             address={props.stanleyAddress} 
-            contract={stanleyNickels}
             ></Token>
 
 
         <Token 
             updatePair={updatePairTokens} 
-            name={tokenData.ct1Name} 
-            balance={tokenData.ct1Balance} 
             address={props.correlated1Address} 
-            contract={correlated1}
             ></Token>
         <Token 
             updatePair={updatePairTokens} 
-            name={tokenData.ct2Name} 
-            balance={tokenData.ct2Balance} 
             address={props.correlated2Address} 
-            contract={correlated2}
             ></Token>
 
 
         </SwapBox>
 
-        {props.poolData.address != constants.AddressZero ?
-        
+        {(props.poolData.address == "" || isZeroAddress(props.poolData.address)) && 
+
         <SwapBox>
-            <span>{props.poolData.addressA}  </span>
+            <span>select or paste in token address:</span>
+            <Input type="string" name="address"  value={!isZeroAddress(props.poolData.addressA) ? props.poolData.addressA : "token address..."} onChange={(event)=> {console.log(event)}} />
+            <span>x</span>
+            <Input type="string" name="address"  value={!isZeroAddress(props.poolData.addressB) ? props.poolData.addressB : "token address..."} onChange={(event)=> {console.log(event)}} />
+            {(!props.poolData.initialized && (!isZeroAddress(props.poolData.addressA) && !isZeroAddress(props.poolData.addressB))) && 
+            
+            <CreatePool poolData={props.poolData} getPool={props.getPool}/>}
+
+        </SwapBox>}
+
+        {utils.isAddress(props.poolData.address) && !isZeroAddress(props.poolData.address) &&
+            <SwapBox>
+            <span>{props.poolData.token1Name}  </span>
             <span>x</span> 
-            <span>{props.poolData.addressB}</span>
+            <span>{props.poolData.token2Name}</span>
+            <span>pool fee: {props.poolData.fee}%</span>
             <span>lp token symbol: {props.poolData.symbol}</span>
             <span>{props.poolData.token1Name} reserves: {props.poolData.reservesA}</span>
             <span>{props.poolData.token2Name} reserves: {props.poolData.reservesB}</span>
             <span>your lp token balance: {props.poolData.yourLPBalance}</span>
             <span>total liquidity: {props.poolData.totalLiquidity}</span>
-        </SwapBox>
-        :
-        <SwapBox>
-        <span>{props.poolData.addressA}  </span>
-        <span>x</span> 
-        <span>{props.poolData.addressB}</span>
-        <button onClick={createPair}>create pool</button>
         </SwapBox>}
+
+        
+
     </Container>
   )
 }
