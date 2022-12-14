@@ -1,4 +1,3 @@
-import React from 'react'
 import {useContract, useProvider} from 'wagmi'
 import MockERC20Abi  from "../ABI/MockERC20"
 

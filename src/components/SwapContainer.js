@@ -1,10 +1,8 @@
-import React, {useState, useEffect} from 'react'
+import React, {useState} from 'react'
 import styled from 'styled-components'
 import {useProvider, useAccount, useSigner,useContractRead} from 'wagmi'
-import PoolAbi from "../ABI/NSPool"
-import { utils, constants } from "ethers";
+import { utils } from "ethers";
 import MockERC20Abi from "../ABI/MockERC20.json"
-import {isZeroAddress} from "../utils"
  
 
 

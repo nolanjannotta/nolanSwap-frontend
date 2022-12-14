@@ -1,8 +1,8 @@
 import React from 'react'
 import {SwapInput} from "../styles"
-import {useProvider, useAccount, useSigner,usePrepareContractWrite, useContractWrite, useContractRead} from 'wagmi'
+import {usePrepareContractWrite, useContractWrite} from 'wagmi'
 import PoolABI from "../ABI/NSPool.json"
-import { utils, constants } from "ethers";
+import { utils } from "ethers";
 
 
 

@@ -8,26 +8,25 @@ import { isZeroAddress } from '../utils';
  
 
 
-function CreatePair(props) {
+function CreatePair({poolData,poolContract,allowanceData}) {
 
 
   return (
     <Container>
-        {(props.poolData.address == "" || isZeroAddress(props.poolData.address)) && "select or create a pair to manage liquidity"}
+        {(poolData.address == "" || isZeroAddress(poolData.address)) && "select or create a pair to manage liquidity"}
         
-        {utils.isAddress(props.poolData.address) && !isZeroAddress(props.poolData.address) &&
+        {utils.isAddress(poolData.address) && !isZeroAddress(poolData.address) &&
         <SwapBox>
-            {props.poolData.initialized 
+            {poolData.initialized 
                 ? <ManageLiquidity 
-                    poolData={props.poolData} 
-                    pool={props.poolContract}
+                    poolData={poolData} 
+                    pool={poolContract}
+                    allowanceData={allowanceData}
                     /> 
 
                 : <InitializePool 
-                    pool={props.poolContract} 
-                    poolData={props.poolData} 
-                    pairTokenA={props.pairTokenA} 
-                    pairTokenB={props.pairTokenB}
+                    poolData={poolData} 
+                    allowanceData={allowanceData}
                     />}
 
         </SwapBox>}

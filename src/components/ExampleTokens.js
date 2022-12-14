@@ -1,24 +1,24 @@
 import React from 'react'
 import styled from 'styled-components'
 import {useAccount,useContractRead,usePrepareContractWrite, useContractWrite } from 'wagmi'
-import {utils} from "ethers";
-// import {isAddress} from "ethers/utils"
+import {constants, utils} from "ethers";
 import MockERC20Abi  from "../ABI/MockERC20"
-import poolFactory from "../ABI/PoolFactory.json"
-import {factory} from "../addresses"
 import {isZeroAddress} from "../utils"
+import useCreatePool from '../hooks/useCreatePool';
+import {schruteBucks, stanleyNickels, ct1, ct2} from "../addresses"
 
 
 
-function Token(props) {
+
+function Token({updatePair, tokenAddress}) {
     const {address} = useAccount();
 
     const token = {
-        addressOrName: props.address,
+        addressOrName: tokenAddress,
         contractInterface: MockERC20Abi,
     }
     
-
+    
     const { data: balance, refetch: getBalance} = useContractRead({
         ...token,
         functionName: 'balanceOf',
@@ -50,7 +50,7 @@ function Token(props) {
     return (
         <span>
             {name} &nbsp;
-            <button onClick={()=>{props.updatePair(props.address)}}>select</button> &nbsp;
+            <button onClick={()=>{updatePair(tokenAddress)}}>select</button> &nbsp;
             <button onClick={mint}>mint</button> &nbsp;
             balance: {parseFloat(utils.formatEther(balance || 0)).toFixed(3)} &nbsp;
             <button onClick={getBalance}>refresh</button> &nbsp;
@@ -60,50 +60,31 @@ function Token(props) {
     )
 }
 
-function CreatePool({poolData, getPool}) {
-    console.log(poolData)
-    const {config} = usePrepareContractWrite({
-        addressOrName: factory,
-        contractInterface: poolFactory,
-        functionName: "createPair",
-        args: [poolData.addressA, poolData.addressB],
-        enabled: true,
-    })
-    // console.log(config)
-    const {write: createPool} = useContractWrite({
-        ...config,
-        onSuccess() {
-            getPool()
-            
-          },
-        onError(error) {
-            console.log('create pool error:', error)
-          },
-    
-    })
-
-    return(
-        <button onClick={createPool}>create pool</button>
-    )
-}
 
 
-function ExampleTokens(props) {
-    
+function ExampleTokens({poolFactory, poolData, getPool, setPoolData}) {
 
-    console.log(props.poolData)
-    
+    const {createPool} = useCreatePool(poolFactory, poolData.addressA, poolData.addressB, getPool)
+
     const updatePairTokens = (newAddress) => {
-        if(newAddress == props.poolData.addressA){
+        if(newAddress == poolData.addressA){
             return
         }
-        props.setPoolData( prev => ({
-            address: "",
+        setPoolData( prev => ({
+            address:"",
             addressA: newAddress,
             addressB: prev.addressA
             
         }))
 
+    }
+
+    const choosePool = () => {
+        setPoolData({
+            address:"",
+            addressA: constants.AddressZero,
+            addressB: constants.AddressZero
+        })
     }
 
   return (
@@ -113,52 +94,55 @@ function ExampleTokens(props) {
 
         <Token 
             updatePair={updatePairTokens} 
-            address={props.schruteAddress} 
+            tokenAddress={schruteBucks} 
             ></Token>
 
         <Token
             updatePair={updatePairTokens} 
-            address={props.stanleyAddress} 
+            tokenAddress={stanleyNickels} 
             ></Token>
 
 
         <Token 
             updatePair={updatePairTokens} 
-            address={props.correlated1Address} 
+            tokenAddress={ct1} 
             ></Token>
         <Token 
             updatePair={updatePairTokens} 
-            address={props.correlated2Address} 
+            tokenAddress={ct2} 
             ></Token>
 
 
         </SwapBox>
 
-        {(props.poolData.address == "" || isZeroAddress(props.poolData.address)) && 
+        {(poolData.address == "" || isZeroAddress(poolData.address)) && 
 
         <SwapBox>
             <span>select or paste in token address:</span>
-            <Input type="string" name="address"  value={!isZeroAddress(props.poolData.addressA) ? props.poolData.addressA : "token address..."} onChange={(event)=> {console.log(event)}} />
+            <Input type="string" name="address"  value={!isZeroAddress(poolData.addressA) ? poolData.addressA : "token address..."} onChange={(event)=> {console.log(event)}} />
             <span>x</span>
-            <Input type="string" name="address"  value={!isZeroAddress(props.poolData.addressB) ? props.poolData.addressB : "token address..."} onChange={(event)=> {console.log(event)}} />
-            {(!props.poolData.initialized && (!isZeroAddress(props.poolData.addressA) && !isZeroAddress(props.poolData.addressB))) && 
-            
-            <CreatePool poolData={props.poolData} getPool={props.getPool}/>}
+            <Input type="string" name="address"  value={!isZeroAddress(poolData.addressB) ? poolData.addressB : "token address..."} onChange={(event)=> {console.log(event)}} />
+            {(!poolData.initialized && (!isZeroAddress(poolData.addressA) && !isZeroAddress(poolData.addressB))) && 
 
+            <button onClick={createPool}>create</button>
+            }
+            {/* <CreatePool poolData={props.poolData} getPool={props.getPool}/> */}
         </SwapBox>}
 
-        {utils.isAddress(props.poolData.address) && !isZeroAddress(props.poolData.address) &&
+        {utils.isAddress(poolData.address) && !isZeroAddress(poolData.address) &&
             <SwapBox>
-            <span>{props.poolData.token1Name}  </span>
+            <span>{poolData.token1Name}  </span>
             <span>x</span> 
-            <span>{props.poolData.token2Name}</span>
-            <span>pool fee: {props.poolData.fee}%</span>
-            <span>lp token symbol: {props.poolData.symbol}</span>
-            <span>{props.poolData.token1Name} reserves: {props.poolData.reservesA}</span>
-            <span>{props.poolData.token2Name} reserves: {props.poolData.reservesB}</span>
-            <span>your lp token balance: {props.poolData.yourLPBalance}</span>
-            <span>total liquidity: {props.poolData.totalLiquidity}</span>
+            <span>{poolData.token2Name}</span>
+            <span>pool fee: {poolData.fee}%</span>
+            <span>lp token symbol: {poolData.symbol}</span>
+            <span>{poolData.token1Name} reserves: {poolData.reservesA}</span>
+            <span>{poolData.token2Name} reserves: {poolData.reservesB}</span>
+            <span>your lp token balance: {poolData.yourLPBalance}</span>
+            <span>total liquidity: {poolData.totalLiquidity}</span>
+        <button onClick={choosePool}>back</button>
         </SwapBox>}
+        
 
         
 

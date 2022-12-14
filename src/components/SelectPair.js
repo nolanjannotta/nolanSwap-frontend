@@ -22,30 +22,6 @@ const [swapData, setSwapData] = useState({
 const [review, setReview] = useState(false) // false == the review screen
 
 
-// const {config: swapOutConfig } = usePrepareContractWrite({
-//     ...contract,
-//     functionName: "swapExactAmountOut",
-//     args: [utils.parseEther(swapData.amountOut.toString()), swapData.addressOut]
-//   })
-// const {config: swapInConfig } = usePrepareContractWrite({
-//     ...contract,
-//     functionName: "swapExactAmountIn",
-//     args: [utils.parseEther(swapData.amountIn.toString()), swapData.addressIn]
-//   })
-
-// const { write: swapOut } = useContractWrite({
-//     ...swapOutConfig,
-//     onSuccess() {console.log("hello")},
-//     onError(error) {console.log('create pool error:', error)},
-
-// })
-// const { write: swapIn } = useContractWrite({
-//     ...swapInConfig,
-//     onSuccess() {console.log("hello")},
-//     onError(error) {console.log('create pool error:', error)},
-// })
-
-
 useEffect(()=> {
     setSwapData(prev => ({
         ...prev,
