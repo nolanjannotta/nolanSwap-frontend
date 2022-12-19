@@ -14,7 +14,6 @@ function useCreatePool(factory, tokenA, tokenB, callback) {
 
         const data = await factory.connect(signer).createPair(tokenA, tokenB)
         setHash(data.hash)
-        console.log(data)
     }
 
 
@@ -22,8 +21,6 @@ function useCreatePool(factory, tokenA, tokenB, callback) {
         if(isSuccess) {
             callback()
         }
-        console.log(data, isError, isLoading, isSuccess)
-
 
     },[isSuccess])
 

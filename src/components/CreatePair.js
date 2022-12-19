@@ -26,6 +26,7 @@ function CreatePair({poolData,poolContract,allowanceData}) {
 
                 : <InitializePool 
                     poolData={poolData} 
+                    poolContract={poolContract}
                     allowanceData={allowanceData}
                     />}
 

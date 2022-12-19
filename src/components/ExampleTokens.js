@@ -5,47 +5,16 @@ import {constants, utils} from "ethers";
 import MockERC20Abi  from "../ABI/MockERC20"
 import {isZeroAddress} from "../utils"
 import useCreatePool from '../hooks/useCreatePool';
+import useMint from '../hooks/useMint';
 import {schruteBucks, stanleyNickels, ct1, ct2} from "../addresses"
 
 
 
 
 function Token({updatePair, tokenAddress}) {
-    const {address} = useAccount();
 
-    const token = {
-        addressOrName: tokenAddress,
-        contractInterface: MockERC20Abi,
-    }
+    const {balance, name, getBalance, mint} = useMint(tokenAddress)
     
-    
-    const { data: balance, refetch: getBalance} = useContractRead({
-        ...token,
-        functionName: 'balanceOf',
-        args: [address]
-      })
-    const { data: name,} = useContractRead({
-        ...token,
-        functionName: 'name',
-      })
-
-
-    const {config: mintConfig } = usePrepareContractWrite({
-        ...token,
-        functionName: "mint",
-        args: [utils.parseEther("10000")]
-      })
-
-    const { write: mint } = useContractWrite({
-        ...mintConfig,
-        onSuccess() {
-            getBalance()
-          },
-        onError(error) {
-            console.log('token mint error:', error)
-          },
-    
-    })
 
     return (
         <span>
@@ -65,13 +34,14 @@ function Token({updatePair, tokenAddress}) {
 function ExampleTokens({poolFactory, poolData, getPool, setPoolData}) {
 
     const {createPool} = useCreatePool(poolFactory, poolData.addressA, poolData.addressB, getPool)
+    console.log(poolData)
 
     const updatePairTokens = (newAddress) => {
         if(newAddress == poolData.addressA){
             return
         }
         setPoolData( prev => ({
-            address:"",
+            ...prev,
             addressA: newAddress,
             addressB: prev.addressA
             
@@ -126,7 +96,6 @@ function ExampleTokens({poolFactory, poolData, getPool, setPoolData}) {
 
             <button onClick={createPool}>create</button>
             }
-            {/* <CreatePool poolData={props.poolData} getPool={props.getPool}/> */}
         </SwapBox>}
 
         {utils.isAddress(poolData.address) && !isZeroAddress(poolData.address) &&

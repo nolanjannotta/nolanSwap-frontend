@@ -27,7 +27,7 @@ function Main() {
 
     const [pool, setPool] = useState("")
 
-    
+   
     const [poolData, setPoolData] = useState({
         address: "",
         reservesA: 0,
@@ -87,16 +87,14 @@ const getPoolData = async() => {
 } 
 
 
-
 useEffect(()=>{
     if(!isZeroAddress(poolAddress)) 
         getPoolData()
-    // else 
-    //   setPoolData({
-    //     address: "",
-    //     addressA: constants.AddressZero,
-    //     addressB: constants.AddressZero,
-    //   })
+    else 
+      setPoolData(prev => ({
+        ...prev,
+        address: constants.AddressZero,
+      }))
 },[poolAddress])
 
 

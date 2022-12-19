@@ -1,13 +1,15 @@
 import React, {useState} from 'react'
 import {SwapInput,Input} from "../styles"
 import { utils } from "ethers";
-
+import useAllowance from '../hooks/useAllowance';
 import {useSigner} from 'wagmi'
 
 
 
 
-const ManageLiquidity = ({poolData, pool, allowanceData, approveA, approveB, getAllowance, allowances}) => {
+const ManageLiquidity = ({poolData, pool, getAllowance, allowances}) => {
+    const {allowanceData, approveA, approveB} = useAllowance(poolData);
+
     const [removeAmount, setRemoveAmount] = useState(0) // amount to either add or remove
     const [addOrRemove, setAddOrRemove] = useState(true); // true == add, false == remove
     const [reviewTx, setReviewTx] = useState(true)

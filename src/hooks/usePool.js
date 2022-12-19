@@ -9,11 +9,13 @@ function usePool(tokenA, tokenB, poolFactory, callback) {
     const getPool = async() => {
         if(isZeroAddress(tokenA) || isZeroAddress(tokenB)) return
         let pool = await poolFactory.getPool(tokenA,tokenB);
+        console.log(pool)
         setPoolAddress(pool)
       }
 
     useEffect(()=> {
         getPool();
+        console.log('ran')
     }, [tokenA, tokenB])
   
   
