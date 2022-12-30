@@ -1,7 +1,6 @@
-import React, {useState, useEffect} from 'react'
+import React from 'react'
 import './App.css';
 import '@rainbow-me/rainbowkit/styles.css';
-import styled from 'styled-components';
 import {
   getDefaultWallets,
   RainbowKitProvider,
@@ -14,9 +13,7 @@ import {
 } from 'wagmi';
 import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
 import "./components/SwapContainer"
-import SelectPair from './components/SelectPair';
 import Main from './components/Main';
-import ExampleTokens from './components/ExampleTokens';
 
 function App() {
 
@@ -43,29 +40,18 @@ function App() {
 
   
   return (
+    // <div className="App">    
     <WagmiConfig client={wagmiClient}>
       <RainbowKitProvider chains={chains}>
       <Main/>
     </RainbowKitProvider>
   </WagmiConfig>
+  // </div>
   );
 }
 
 export default App;
 
-
-const Wrapper = styled.div`
-  background-color: #fbf2c4;
-  height: 100%;
-  width: 100%;
-  // display: flex;
-  // // flex-direction: column;
-  // justify-content: center;
-  // align-items: center;
-
-
-
-`
 
 
 

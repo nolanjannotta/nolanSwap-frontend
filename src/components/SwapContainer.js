@@ -7,24 +7,7 @@ import MockERC20Abi from "../ABI/MockERC20.json"
 
 
 
-function TokenBalance({tokenAddress}) {
-    const {address} = useAccount();
-
-    const { data: balance, refetch: getBalance} = useContractRead({
-        addressOrName: tokenAddress,
-        contractInterface: MockERC20Abi,
-        functionName: 'balanceOf',
-        args: [address]
-      })
-  return (
-    <div>balance: {parseFloat(utils.formatEther(balance || 0)).toFixed(3)}</div>
-  )
-}
-
-
-
 function SwapContainer({setSwapData, poolData, poolContract, swapData, setReview}) {
-
 const { address, isConnected } = useAccount();
 const [poolAddr, setPoolAddr] = useState();
 
@@ -71,7 +54,7 @@ const getOtherAmount = async() => {
         <SwapInput>
                 {swapData.nameIn}
                 <div>
-                    <Input type="number" name="name" value={swapData.amountIn} onChange={(event)=> {setSwapData( prev => ({...prev, amountIn: event.target.value || 0,lastEntered: 1}))}} />
+                    <Input type="number" name="name" value={swapData.amountIn || ""} onChange={(event)=> {setSwapData( prev => ({...prev, amountIn: event.target.value || 0,lastEntered: 1}))}} />
                     {/* <TokenBalance tokenAddress={swapData.addressIn}/> */}
                 </div>
                 
@@ -79,7 +62,7 @@ const getOtherAmount = async() => {
                 <button onClick={flipTokens}>flip</button>
                 {swapData.nameOut}
                 <div>
-                    <Input type="number" name="name" value={swapData.amountOut} onChange={(event)=> {setSwapData( prev => ({...prev, amountOut: event.target.value || 0, lastEntered: 2}))}}/>
+                    <Input type="number" name="name" value={swapData.amountOut || ""} onChange={(event)=> {setSwapData( prev => ({...prev, amountOut: event.target.value || 0, lastEntered: 2}))}}/>
                     {/* <TokenBalance tokenAddress={swapData.addressOut}/> */}
                 </div>
                 <button onClick={()=>{getOtherAmount(); setReview(prev => !prev)}}>review operation</button>

@@ -11,7 +11,6 @@ function useInitialize(poolContract, initAmount, callback) {
         hash: hash,
       })
 
-    console.log(utils.parseEther(initAmount.tokenA).toString(), utils.parseEther(initAmount.tokenB).toString())
     const initialize = async() => {
         if(!initAmount.tokenA || !initAmount.tokenB)
             return

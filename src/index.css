@@ -15,6 +15,15 @@ code {
     monospace;
 }
 
+/* html,
+body,
+#root,
+.app {
+  height: 100vh;
+  width: 100vw;
+  display: block;
+} */
+
 
 /* div {
   box-sizing: border-box;

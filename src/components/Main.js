@@ -13,33 +13,20 @@ import {factory} from "../addresses"
 import {isZeroAddress} from "../utils"
 import useAllowance from '../hooks/useAllowance';
 import usePool from '../hooks/usePool';
+import useGetPoolData from '../hooks/useGetPoolData'
+import Navbar from './Navbar';
+import {Container, Box, Card, CardActions, CardContent, CssBaseline, Grid} from '@mui/material'
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { orange } from '@mui/material/colors';
 
 
+const theme = createTheme();
 
-
-// to handle all logic
 
 function Main() {
 
     const provider = useProvider();
 
-    const {address} = useAccount()
-
-    const [pool, setPool] = useState("")
-
-   
-    const [poolData, setPoolData] = useState({
-        address: "",
-        reservesA: 0,
-        reservesB: 0,
-        symbol:"",
-        totalLiquidity: 0,
-        initialized: false,
-        yourLPBalance: 0,
-        addressA: constants.AddressZero,
-        addressB: constants.AddressZero,
-        fee: 0
-    })
     
     const poolFactory = useContract({
       addressOrName: factory,
@@ -47,95 +34,48 @@ function Main() {
       signerOrProvider: provider
     });
 
-    const {pairTokenA, pairTokenB} = useTokenPair(poolData.addressA, poolData.addressB);
 
-    const {allowanceData} = useAllowance(poolData, pairTokenA, pairTokenB);
+    const allPoolData = useGetPoolData(poolFactory);
 
-    const {poolAddress, getPool} = usePool(poolData.addressA, poolData.addressB,poolFactory)
+    const tokenPairContracts = useTokenPair(allPoolData.poolData.addressA, allPoolData.poolData.addressB)
 
-    const poolContract = useContract({
-        addressOrName: poolAddress,
-        contractInterface: PoolABI,
-        signerOrProvider: provider
-    });
-
-const getPoolData = async() => {
-    let lpSymbol = await poolContract.symbol();
-    let reservesA = await poolContract.tokenToInternalBalance(poolData.addressA)
-    let reservesB = await poolContract.tokenToInternalBalance(poolData.addressB)
-    let initialized = await poolContract.initialized();
-    let totalLiquidity = await poolContract.totalLiquidity();
-    let yourLPBalance = await poolContract.balanceOf(address);
-    let fee = await poolContract.fee();
-    let token1Name = await pairTokenA.name()
-    let token2Name = await pairTokenB.name()
-
-    setPoolData(prev => ({
-        ...prev,
-        address: poolAddress,
-        reservesA: utils.formatEther(reservesA.toString()),
-        reservesB: utils.formatEther(reservesB.toString()),
-        initialized: initialized,
-        totalLiquidity: utils.formatEther(totalLiquidity.toString()),
-        symbol: lpSymbol,
-        yourLPBalance: utils.formatEther(yourLPBalance.toString()),
-        token1Name: token1Name, 
-        token2Name: token2Name,
-        fee: (fee/ 10).toString(),
-    }))
-
-} 
-
-
-useEffect(()=>{
-    if(!isZeroAddress(poolAddress)) 
-        getPoolData()
-    else 
-      setPoolData(prev => ({
-        ...prev,
-        address: constants.AddressZero,
-      }))
-},[poolAddress])
-
-
-
+    const allowanceData = useAllowance(allPoolData.poolData, allPoolData.getPool)
 
   return (
-    <Background>
+    <ThemeProvider theme={theme}>
+    <Box bgcolor="#fbf2c4" >
+      <CssBaseline/>
+      <Navbar/>
 
-            <AccountDetails>
-          <CustomConnect/>
-            </AccountDetails>  
+      <Container align="center" minHeight="100%"  minWidth='100%'>      
 
         <ExampleTokens 
-            getPool={getPool}
-            poolData={poolData} setPoolData={setPoolData} 
             poolFactory={poolFactory} 
-            ></ExampleTokens>       
+            allPoolData={allPoolData}
+            />       
 
-         <CardHolder>
-           <CreatePair 
-            poolData={poolData} 
-            poolContract={poolContract}
-            pairTokenA={pairTokenA}
-            pairTokenB={pairTokenB}
+             <Box display="flex" justifyContent="space-around">
+              <CreatePair 
+            allPoolData={allPoolData}
+            tokenPairContracts={tokenPairContracts}
             allowanceData={allowanceData}
+            />
             
-            
-            ></CreatePair>
+              <SelectPair 
+                allPoolData={allPoolData}
+                tokenPairContracts={tokenPairContracts}
+                allowanceData={allowanceData}
+              /> 
+          
+          </Box> 
 
-          <SelectPair 
-            poolData={poolData} 
-            poolContract={poolContract}
-            pairTokenA={pairTokenA}
-            pairTokenB={pairTokenB}
-            allowanceData={allowanceData}
-            ></SelectPair> 
-          </CardHolder>
+           
+
+          </Container>
+      </Box>
+       </ThemeProvider>
 
 
-
-    </Background>
   )
 }
 
@@ -152,10 +92,10 @@ const Background = styled.div`
 background-color: #fbf2c4;
 height: 100vh;
 width: 100vw;
-display: flex;
-flex-direction: column;
-align-items: center;
-justify-content: center
+// display: flex;
+// flex-direction: column;
+// align-items: center;
+// justify-content: center
 `
 
 const AccountDetails = styled.div`

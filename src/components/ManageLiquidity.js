@@ -1,8 +1,8 @@
 import React, {useState} from 'react'
 import {SwapInput,Input} from "../styles"
-import { utils } from "ethers";
 import useAllowance from '../hooks/useAllowance';
 import {useSigner} from 'wagmi'
+import useManageLiquidity from '../hooks/useManageLiquidity';
 
 
 
@@ -10,21 +10,13 @@ import {useSigner} from 'wagmi'
 const ManageLiquidity = ({poolData, pool, getAllowance, allowances}) => {
     const {allowanceData, approveA, approveB} = useAllowance(poolData);
 
-    const [removeAmount, setRemoveAmount] = useState(0) // amount to either add or remove
+    const {addLiquidity, removeLiquidity, updateLiquidityParams, liquidityParams, setLiquidityParams} = useManageLiquidity(pool,poolData)
+    console.log(liquidityParams)
     const [addOrRemove, setAddOrRemove] = useState(true); // true == add, false == remove
     const [reviewTx, setReviewTx] = useState(true)
-    const { data: signer } = useSigner()
-    const [addLiquidityData, setAddLiquidityData] = useState({
-        nameIn: poolData.token1Name,
-        addressIn: poolData.addressA,
-        amountIn: 0,
-        name2In: poolData.token2Name,
-        address2In: poolData.addressB,
-        amount2In: 0
-    })
 
     const flipTokens = () => {
-        setAddLiquidityData(prev => ({
+        setLiquidityParams(prev => ({
             ...prev,
             addressIn: prev.address2In, 
             nameIn: prev.name2In,
@@ -39,36 +31,6 @@ const ManageLiquidity = ({poolData, pool, getAllowance, allowances}) => {
     
     }
 
-    // useEffect(()=>{
-    //     setAddLiquidityData(prev => ({
-    //         ...prev,
-    //         addressIn: poolData.addressA, 
-    //         nameIn: poolData.token1Name,
-    //         amountIn: 0,
-    //         address2In: poolData.addressB,
-    //         name2In: poolData.token2Name,
-    //         amount2In: 0,
-    
-    //     }))
-        
-    // },[poolData])
-
-    const getAddLiquidityData = async() => {
-        let results = await pool.getLiquidityAmount(addLiquidityData.addressIn, utils.parseEther(addLiquidityData.amountIn.toString()))
-    
-        setAddLiquidityData( prev => ({
-                ...prev, 
-                address2In: results[0],
-                amount2In: utils.formatEther(results[1].toString())}))
-    
-    }
-    const removeLiquidity = async() => {
-        await pool.connect(signer).removeLiquidity(utils.parseEther(removeAmount.toString()))
-    }
-    const addLiquidity = async() => {
-        await pool.connect(signer).addLiquidity(addLiquidityData.addressIn, utils.parseEther(addLiquidityData.amountIn.toString()))
-    }
-
     
     if(addOrRemove) {
             return(
@@ -78,7 +40,7 @@ const ManageLiquidity = ({poolData, pool, getAllowance, allowances}) => {
                     <SwapInput>
                         <span> remove liquidity</span>
 
-                        <Input type="number" name="name" placeholder="amount"  onChange={(event) => {setRemoveAmount(event.target.value)}} />
+                        <Input type="number" name="name" placeholder="amount"  onChange={(event) => {setLiquidityParams( prev => ({...prev, removeAmount: event.target.value}))}} />
                     </SwapInput>
                     <button onClick={() => setReviewTx(prev => !prev)}>review operation</button>
 
@@ -86,7 +48,7 @@ const ManageLiquidity = ({poolData, pool, getAllowance, allowances}) => {
             :
             <>
             <SwapInput>
-             removing {removeAmount} lp tokens
+             removing {liquidityParams.removeAmount} lp tokens
                 <button onClick={removeLiquidity}>submit</button>
              </SwapInput>
             <button onClick={() => setReviewTx(prev => !prev)}>back</button>
@@ -103,12 +65,12 @@ const ManageLiquidity = ({poolData, pool, getAllowance, allowances}) => {
                     <span>
                     add liquidity:
                     </span>
-                            {addLiquidityData.nameIn}:
-                            <Input type="number" name="name" value={addLiquidityData.amountIn} onChange={(event)=> {setAddLiquidityData( prev => ({...prev, amountIn: event.target.value}))}} />
-                            <button onClick={getAddLiquidityData}>calculate</button>
+                            {liquidityParams.nameIn}:
+                            <Input type="number" name="name" value={liquidityParams.amountIn} onChange={(event)=> {setLiquidityParams( prev => ({...prev, amountIn: event.target.value}))}} />
+                            <button onClick={updateLiquidityParams}>calculate</button>
                             <button onClick={flipTokens}>flip</button>
-                            {addLiquidityData.name2In}:&nbsp; 
-                            {addLiquidityData.amount2In} 
+                            {liquidityParams.name2In}:&nbsp; 
+                            {liquidityParams.amount2In} 
                             {/* <Input type="number" name="name" value={addLiquidityTokensIn.amount2In} onChange={(event)=> {setAddLiquidityTokensIn( prev => ({...prev, nameIn: props.tokenNames.tokenB, name2In:props.tokenNames.tokenA, amount2In: event.target.value, addressIn: props.pairTokenA.address, address2In: props.pairTokenB.address}))}}/> */}
         
                 </SwapInput>
@@ -119,11 +81,11 @@ const ManageLiquidity = ({poolData, pool, getAllowance, allowances}) => {
             <SwapInput>
                 liquidity to add:
                 <div>
-                {addLiquidityData.nameIn} - {addLiquidityData.amountIn}
+                {liquidityParams.nameIn} - {liquidityParams.amountIn}
 
                 </div>
                 <div>
-                {addLiquidityData.name2In} - {addLiquidityData.amount2In}   
+                {liquidityParams.name2In} - {liquidityParams.amount2In}   
                 </div>
                 <button onClick={addLiquidity}>submit</button>
 
