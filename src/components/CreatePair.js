@@ -26,13 +26,11 @@ function CreatePair({ allPoolData, tokenPairContracts }) {
         <Card align="center" sx={{ height: .95, overflowY: "auto" }}>
         
       <CardHeader title="Manage Liquidity" align="center" />
-      <Box sx={{ height: 1/2, display:"flex", alignItems:"center", justifyContent: "center"}}>
          {(poolData.address == "" || isZeroAddress(poolData.address)) && (
         <Typography variant="h5" align="center">
           select or create a pair to manage liquidity
         </Typography>
       )} 
-      </Box>
       
 
       {utils.isAddress(poolData.address) &&

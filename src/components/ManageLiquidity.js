@@ -148,19 +148,19 @@ const ManageLiquidity = ({ poolData, pool }) => {
       );
     } else {
       return (
-        <>
-          <SwapInput>
-            liquidity to add:
-            <div>
-              {liquidityParams.nameIn} - {liquidityParams.amountIn}
-            </div>
-            <div>
-              {liquidityParams.name2In} - {liquidityParams.amount2In}
-            </div>
-            <button onClick={addLiquidity}>submit</button>
-          </SwapInput>
-          <button onClick={() => setReviewTx((prev) => !prev)}>back</button>
-        </>
+          <Box>
+
+            <Typography variant="h5">adding {liquidityParams.nameIn} - {parseFloat(liquidityParams.amountIn || 0).toFixed(4)}</Typography>
+
+            <Typography variant="h5">adding {liquidityParams.name2In} - {parseFloat(liquidityParams.amount2In || 0).toFixed(4)}</Typography>
+
+            <ButtonGroup>
+               <Button onClick={addLiquidity}>submit</Button>
+                <Button onClick={() => setReviewTx((prev) => !prev)}>back</Button> 
+            </ButtonGroup>
+            
+          </Box>
+          
       );
     }
   };
