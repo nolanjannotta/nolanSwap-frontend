@@ -3,6 +3,12 @@ import {SwapInput} from "../styles"
 import {usePrepareContractWrite, useContractWrite} from 'wagmi'
 import PoolABI from "../ABI/NSPool.json"
 import { utils } from "ethers";
+import {
+  Box,
+  Typography,
+  Button,
+  ButtonGroup
+} from "@mui/material";
 
 
 
@@ -27,26 +33,29 @@ function Swap({contractAddress, args, functionName}) {
     })
 
     return(
-        <button onClick={swap}>swaaaaap</button>
+        <Button onClick={swap}>Swap</Button>
     )
 }
 
 
 function ReviewSwap({swapData, setReview, pool}) {
   return (
-    <SwapInput>
-            review swap
-            <div>
-            you send {swapData.amountIn} {swapData.nameIn}
-            </div>
-            <div>
-            you recieve {swapData.amountOut} {swapData.nameOut}
-            </div>
+    <Box>
+
+            <Typography variant="h5">you send {parseFloat(swapData.amountIn || 0).toFixed(5)} {swapData.nameIn}</Typography>
+
+            <Typography variant="h5">you recieve {parseFloat(swapData.amountOut || 0).toFixed(5)} {swapData.nameOut}</Typography>
+            
+
+            <ButtonGroup>
+            <Button onClick={()=>{setReview(prev => !prev)}}>back</Button>
             {swapData.lastEntered == 1 && <Swap functionName="swapExactAmountIn" contractAddress={pool} args={[utils.parseEther(swapData.amountIn.toString()), swapData.addressIn]}/>}
             {swapData.lastEntered == 2 && <Swap functionName="swapExactAmountOut" contractAddress={pool} args={[utils.parseEther(swapData.amountOut.toString()), swapData.addressOut]}/>}
             
-            <button onClick={()=>{setReview(prev => !prev)}}>back</button>
-        </SwapInput>
+            
+            </ButtonGroup>
+            
+        </Box>
   )
 }
 

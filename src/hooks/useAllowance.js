@@ -104,7 +104,7 @@ function useAllowance(poolData, callback) {
     useEffect(()=> {
         getAllowance()
         
-    },[poolData.address])
+    },[poolData])
 
   return {allowances, approveA, approveB}
 }

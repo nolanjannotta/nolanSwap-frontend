@@ -1,102 +1,175 @@
-import React, {useState} from 'react'
-import {SwapInput,Input} from "../styles"
-import useAllowance from '../hooks/useAllowance';
-import {useSigner} from 'wagmi'
-import useManageLiquidity from '../hooks/useManageLiquidity';
+import React, { useState } from "react";
+import { SwapInput, Input } from "../styles";
+import useAllowance from "../hooks/useAllowance";
+import useManageLiquidity from "../hooks/useManageLiquidity";
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  ToggleButton,
+  ToggleButtonGroup,
+  ButtonGroup,
+  Divider
+} from "@mui/material";
 
+const ManageLiquidity = ({ poolData, pool }) => {
+  const { allowanceData, approveA, approveB } = useAllowance(poolData);
 
+  const {
+    addLiquidity,
+    removeLiquidity,
+    updateLiquidityParams,
+    liquidityParams,
+    setLiquidityParams,
+  } = useManageLiquidity(pool, poolData);
+  console.log(liquidityParams);
+  const [addOrRemove, setAddOrRemove] = useState(false); 
+  const [reviewTx, setReviewTx] = useState(true);
 
+  const handleToggle = (e, value) => {
+    setAddOrRemove(value);
+  };
 
-const ManageLiquidity = ({poolData, pool, getAllowance, allowances}) => {
-    const {allowanceData, approveA, approveB} = useAllowance(poolData);
+  const flipTokens = () => {
+    setLiquidityParams((prev) => ({
+      ...prev,
+      addressIn: prev.address2In,
+      nameIn: prev.name2In,
+      amountIn: 0,
+      address2In: prev.addressIn,
+      name2In: prev.nameIn,
+      amount2In: 0,
+    }));
+  };
 
-    const {addLiquidity, removeLiquidity, updateLiquidityParams, liquidityParams, setLiquidityParams} = useManageLiquidity(pool,poolData)
-    console.log(liquidityParams)
-    const [addOrRemove, setAddOrRemove] = useState(true); // true == add, false == remove
-    const [reviewTx, setReviewTx] = useState(true)
+  const showRemoveWindow = () => {
+    if (reviewTx) {
+      return (
+        <>
+          <ToggleButtonGroup
+            color="primary"
+            value={addOrRemove}
+            exclusive
+            onChange={handleToggle}
+            aria-label="Platform"
+          >
+            <ToggleButton value={false}>Add Liquidity</ToggleButton>
+            <ToggleButton value={true}>Remove Liquidity</ToggleButton>
+          </ToggleButtonGroup>
 
-    const flipTokens = () => {
-        setLiquidityParams(prev => ({
-            ...prev,
-            addressIn: prev.address2In, 
-            nameIn: prev.name2In,
-            amountIn: 0,
-            address2In: prev.addressIn,
-            name2In: prev.nameIn,
-            amount2In: 0,
-    
-    
-        
-        }))
-    
+          <Box>
+            <TextField
+            size="small"
+            sx={{margin:2}}
+              id="outlined-basic"
+              label="amount"
+              variant="outlined"
+              type="number"
+              name="address"
+              onChange={(event) => {
+                setLiquidityParams((prev) => ({
+                  ...prev,
+                  removeAmount: event.target.value,
+                }));
+              }}
+            />
+          </Box>
+          <Button onClick={() => setReviewTx((prev) => !prev)}>
+            review operation
+          </Button>
+        </>
+      );
+    } else {
+      return (
+        <>
+          <Box>
+            <Typography variant="h6">
+              removing {liquidityParams.removeAmount} lp tokens
+            </Typography>
+            <Divider sx={{margin:5}} variant="middle" />
+            <ButtonGroup>
+            <Button onClick={() => setReviewTx((prev) => !prev)}>back</Button>
+              <Button onClick={removeLiquidity}>submit</Button>
+              
+            </ButtonGroup>
+          </Box>
+        </>
+      );
     }
+  };
 
-    
-    if(addOrRemove) {
-            return(
-                reviewTx ?            
-                <>            
-                <button onClick={() => {setAddOrRemove(prev => !prev)}}>add/remove liquidity</button>
-                    <SwapInput>
-                        <span> remove liquidity</span>
+  const showAddWindow = () => {
+    if (reviewTx) {
+      return (
+        <>
+          <ToggleButtonGroup
+            color="primary"
+            value={addOrRemove}
+            exclusive
+            onChange={handleToggle}
+            aria-label="Platform"
+          >
+            <ToggleButton value={false}>Add Liquidity</ToggleButton>
+            <ToggleButton value={true}>Remove Liquidity</ToggleButton>
+          </ToggleButtonGroup>
 
-                        <Input type="number" name="name" placeholder="amount"  onChange={(event) => {setLiquidityParams( prev => ({...prev, removeAmount: event.target.value}))}} />
-                    </SwapInput>
-                    <button onClick={() => setReviewTx(prev => !prev)}>review operation</button>
-
-                </>
-            :
-            <>
-            <SwapInput>
-             removing {liquidityParams.removeAmount} lp tokens
-                <button onClick={removeLiquidity}>submit</button>
-             </SwapInput>
-            <button onClick={() => setReviewTx(prev => !prev)}>back</button>
-
-            </>
-            )}
-    else {
-        return(        
-            reviewTx ?
-            <>
-                <button onClick={() => {setAddOrRemove(prev => !prev)}}>add/remove liquidity</button>
-        
-                <SwapInput>
-                    <span>
-                    add liquidity:
-                    </span>
-                            {liquidityParams.nameIn}:
-                            <Input type="number" name="name" value={liquidityParams.amountIn} onChange={(event)=> {setLiquidityParams( prev => ({...prev, amountIn: event.target.value}))}} />
-                            <button onClick={updateLiquidityParams}>calculate</button>
-                            <button onClick={flipTokens}>flip</button>
-                            {liquidityParams.name2In}:&nbsp; 
-                            {liquidityParams.amount2In} 
-                            {/* <Input type="number" name="name" value={addLiquidityTokensIn.amount2In} onChange={(event)=> {setAddLiquidityTokensIn( prev => ({...prev, nameIn: props.tokenNames.tokenB, name2In:props.tokenNames.tokenA, amount2In: event.target.value, addressIn: props.pairTokenA.address, address2In: props.pairTokenB.address}))}}/> */}
-        
-                </SwapInput>
-                <button onClick={() => setReviewTx(prev => !prev)}>review operation</button>
-            </>
-            : 
-            <>
-            <SwapInput>
-                liquidity to add:
-                <div>
-                {liquidityParams.nameIn} - {liquidityParams.amountIn}
-
-                </div>
-                <div>
-                {liquidityParams.name2In} - {liquidityParams.amount2In}   
-                </div>
-                <button onClick={addLiquidity}>submit</button>
-
+          <Box sx={{display:"flex", flexDirection: "column", alignItems:"center"}}>
+            {/* <Typography>{liquidityParams.nameIn}:</Typography> */}
+            <TextField
+            size="small"
+            sx={{mt: 2}}
+              id="outlined-basic"
+              label={liquidityParams.nameIn}
+              variant="outlined"
+              type="string"
+              value={liquidityParams.amountIn != 0 ? liquidityParams.amountIn : ""}
+              onChange={(event) => {
+                setLiquidityParams((prev) => ({
+                  ...prev,
+                  amountIn: event.target.value,
+                }));
+              }}
+            />
+            <Typography>{liquidityParams.name2In}: {liquidityParams.amount2In}</Typography>
             
-            </SwapInput>
-            <button onClick={() => setReviewTx(prev => !prev)}>back</button>
+            <ButtonGroup 
+            variant="text"
+            aria-label="outlined primary button group">
+              <Button onClick={updateLiquidityParams}>calculate</Button>
+            <Button onClick={flipTokens}>flip</Button>
+            <Button onClick={() => setReviewTx((prev) => !prev)}>review operation</Button>  
+            </ButtonGroup>
+            
+            
+          </Box>
+          
+        </>
+      );
+    } else {
+      return (
+        <>
+          <SwapInput>
+            liquidity to add:
+            <div>
+              {liquidityParams.nameIn} - {liquidityParams.amountIn}
+            </div>
+            <div>
+              {liquidityParams.name2In} - {liquidityParams.amount2In}
+            </div>
+            <button onClick={addLiquidity}>submit</button>
+          </SwapInput>
+          <button onClick={() => setReviewTx((prev) => !prev)}>back</button>
+        </>
+      );
+    }
+  };
 
-            </>
-        )}
-    
-}
+  if (addOrRemove) {
+    return showRemoveWindow();
+  } else {
+    return showAddWindow();
+  }
+};
 
-export default ManageLiquidity
-
+export default ManageLiquidity;

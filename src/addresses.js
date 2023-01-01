@@ -1,6 +1,6 @@
-export const factory        = "0x20d7B364E8Ed1F4260b5B90C41c2deC3C1F6D367"
-export const schruteBucks   = "0xf5C3953Ae4639806fcbCC3196f71dd81B0da4348"
-export const stanleyNickels = "0x90b97E83e22AFa2e6A96b3549A0E495D5Bae61aF"
-export const ct1            = "0xdb54fa574a3e8c6aC784e1a5cdB575A737622CFf"
-export const ct2            = "0xDDa0648FA8c9cD593416EC37089C2a2E6060B45c"
+export const factory        = "0x7A28cf37763279F774916b85b5ef8b64AB421f79"
+export const schruteBucks   = "0x2BB8B93F585B43b06F3d523bf30C203d3B6d4BD4"
+export const stanleyNickels = "0xB7ca895F81F20e05A5eb11B05Cbaab3DAe5e23cd"
+export const ct1            = "0xd0EC100F1252a53322051a95CF05c32f0C174354"
+export const ct2            = "0x2d13826359803522cCe7a4Cfa2c1b582303DD0B4"
 

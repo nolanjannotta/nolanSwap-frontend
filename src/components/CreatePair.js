@@ -1,58 +1,65 @@
-import React,{useState} from 'react'
-import styled from 'styled-components'
-import InitializePool from './InitializePool';
-import ManageLiquidity from './ManageLiquidity';
-import {utils} from "ethers";
-import { isZeroAddress } from '../utils';
-import {Container, Box, Card, CardContent, Grid,Typography, CardHeader} from '@mui/material'
+import React from "react";
+import styled from "styled-components";
+import InitializePool from "./InitializePool";
+import ManageLiquidity from "./ManageLiquidity";
+import { utils } from "ethers";
+import { isZeroAddress } from "../utils";
+import useAllowance from "../hooks/useAllowance"
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  CardHeader,
+} from "@mui/material";
 
 
-const cardStyle = {
-    minWidth: "30%",
-    minHeight: "30%"
-
-}
- 
-
-
-function CreatePair({allPoolData, tokenPairContracts, allowanceData}) {
-
-    const {poolData, poolContract} = allPoolData
-    const {pairTokenA, pairTokenB} = tokenPairContracts
-    const {allowances, approveA, approveB} = allowanceData
+function CreatePair({ allPoolData, tokenPairContracts }) {
+  const { poolData, poolContract, getPool } = allPoolData;
+  const allowanceData = useAllowance(poolData, getPool);
 
   return (
-    <Card component="div" sx={{width: 1/3}}>
-        <CardHeader title="Manage Liquidity" align="center" />
-        {(poolData.address == "" || isZeroAddress(poolData.address)) && 
+
+    <Box sx={{width: "30%"}}>
+
         
-        <Typography variant="h5" align="center">select or create a pair to manage liquidity</Typography>
+        <Card align="center" sx={{ height: .95, overflowY: "auto" }}>
         
-        }
-        
-        {utils.isAddress(poolData.address) && !isZeroAddress(poolData.address) &&
+      <CardHeader title="Manage Liquidity" align="center" />
+      <Box sx={{ height: 1/2, display:"flex", alignItems:"center", justifyContent: "center"}}>
+         {(poolData.address == "" || isZeroAddress(poolData.address)) && (
+        <Typography variant="h5" align="center">
+          select or create a pair to manage liquidity
+        </Typography>
+      )} 
+      </Box>
+      
+
+      {utils.isAddress(poolData.address) &&
+        !isZeroAddress(poolData.address) && (
         <CardContent>
-            {poolData.initialized 
-                ? <ManageLiquidity 
-                    poolData={poolData} 
-                    pool={poolContract}
-                    allowanceData={allowanceData}
-                    /> 
-
-                : <InitializePool 
-                    poolData={poolData} 
-                    poolContract={poolContract}
-                    allowanceData={allowanceData}
-                    />}
-
-        </CardContent>}
-
+            {poolData.initialized ? (
+              <ManageLiquidity
+                poolData={poolData}
+                pool={poolContract}
+                allowanceData={allowanceData}
+              />
+            ) : (
+              <InitializePool
+                poolData={poolData}
+                poolContract={poolContract}
+                allowanceData={allowanceData}
+              />
+            )}
+            </CardContent>
+        )}
+        
     </Card>
-  )
+    </Box>
+  );
 }
 
-export default CreatePair
-
+export default CreatePair;
 
 // const Container = styled.div`
 //     background-color: #74a892;
@@ -67,10 +74,10 @@ export default CreatePair
 
 // `
 const SwapBox = styled.div`
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-evenly;
-    align-items: center;
-`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+`;
