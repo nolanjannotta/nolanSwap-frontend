@@ -12,7 +12,7 @@ function useCreatePool(factory, tokenA, tokenB, callback) {
 
     const createPool = async() => {
 
-        const data = await factory.connect(signer).createPairClone(tokenA, tokenB)
+        const data = await factory.connect(signer).createPairCreate2(tokenA, tokenB)
         setHash(data.hash)
     }
 
