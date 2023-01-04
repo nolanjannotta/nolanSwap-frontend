@@ -99,7 +99,9 @@ function useGetPoolData(poolFactory) {
         }))
         setLoading(false)
     
-    } 
+    }
+
+    console.log(poolData)
 
     const resetPoolData = () => {
         setPoolData(basePoolData);
